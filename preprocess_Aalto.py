@@ -4,8 +4,6 @@ import time
 
 start = time.time()
 
-
-
 file_raw = 'data/raw/keystrokes.csv'
 file_users = 'data/raw/test_sections.csv'
 
@@ -47,62 +45,57 @@ print("Mapped participant IDs")
 
 keys_db = keys_db[(keys_db.PARTICIPANT_ID != 0)]
 
-for participant_id in set(keys_db['PARTICIPANT_ID']):
-    if keys_db[keys_db['PARTICIPANT_ID'] == participant_id]['TEST_SECTION_ID'].nunique() < NUM_SESSIONS:
-        keys_db = keys_db[keys_db.PARTICIPANT_ID != participant_id]
-    print("participant_id", participant_id)
+# Optimize filtering (vectorized instead of row-by-row iteration)
+print("Filtering participants...")
+valid_parts = keys_db.groupby('PARTICIPANT_ID')['TEST_SECTION_ID'].nunique()
+valid_parts = valid_parts[valid_parts >= NUM_SESSIONS].index
+keys_db = keys_db[keys_db['PARTICIPANT_ID'].isin(valid_parts)]
+print(f"Filtered to {len(valid_parts)} valid participants")
 
 keys_db = keys_db.set_index(['PARTICIPANT_ID', 'TEST_SECTION_ID'])
 keys_db = keys_db.sort_index()
 
-users_ids = list(keys_db.groupby(level=0).first().index)
-users_len_list = [len(keys_db.loc[x].groupby(level=[0]).size()) for x in users_ids]
-
-
 keys_features_db = []
 keys_features_db_users_ids = []
-indexes = np.unique(keys_db.index.values)
+keys_features_db_dict = {}
 
-current_user = indexes[0][0]
-
-end = time.time()
-
-time_elapsed = (end-start)/60
-print("time_elapsed:", time_elapsed)
-
-
+current_user = None
 keys_feature_session = []
-for index in indexes:
-    session_key = keys_db.loc[index]
-    next_user = index[0]
+keys_feature_session_dict = {}
+
+print("Extracting features (optimized)...")
+for index, session_key in keys_db.groupby(level=['PARTICIPANT_ID', 'TEST_SECTION_ID']):
+    user_id = index[0]
+    session_id = index[1]
+
+    if current_user is None:
+        current_user = user_id
+
     keys_features = extract_keys_features(session_key)
-    if current_user != next_user:
+
+    if current_user != user_id:
         if len(keys_feature_session) >= NUM_SESSIONS:
             keys_features_db.append(keys_feature_session)
             keys_features_db_users_ids.append(current_user)
-        current_user = next_user
-        keys_feature_session = []
-    keys_feature_session.append(keys_features)
-keys_features_db.append(keys_feature_session)
-keys_features_db_users_ids.append(current_user)
-
-np.save('data/Mobile_keys_db_6_features.npy', keys_features_db)
-
-keys_features_db_dict = {}
-current_user = indexes[0][0]
-keys_feature_session_dict = {}
-for index in indexes:
-    session_key = keys_db.loc[index]
-    next_user = index[0]
-    keys_features = extract_keys_features(session_key)
-    if current_user != next_user:
-        if len(keys_feature_session) >= NUM_SESSIONS:
             keys_features_db_dict[str(current_user)] = keys_feature_session_dict
-        current_user = next_user
+            
+        current_user = user_id
+        keys_feature_session = []
         keys_feature_session_dict = {}
-    keys_feature_session_dict[str(index[1])] = keys_features
-keys_features_db_dict[str(next_user)] = keys_feature_session_dict
+        
+    keys_feature_session.append(keys_features)
+    keys_feature_session_dict[str(session_id)] = keys_features
 
+if len(keys_feature_session) >= NUM_SESSIONS:
+    keys_features_db.append(keys_feature_session)
+    keys_features_db_users_ids.append(current_user)
+    keys_features_db_dict[str(current_user)] = keys_feature_session_dict
+
+end = time.time()
+time_elapsed = (end-start)/60
+print(f"Time elapsed: {time_elapsed:.2f} minutes")
+
+np.save('data/Mobile_keys_db_6_features.npy', np.array(keys_features_db, dtype=object))
 np.save('keystroke_all_dict.npy', keys_features_db_dict)
 
 
