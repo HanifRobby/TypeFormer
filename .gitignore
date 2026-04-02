@@ -2,7 +2,7 @@ latest_experiment/
 preprocess/
 data/
 *.pdf
-
+*.npy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
