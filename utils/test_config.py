@@ -4,6 +4,8 @@ from utils.train_config import configs
 
 test_configs = argparse.ArgumentParser()
 
+test_configs.db = 'Aalto_mobile'
+
 if test_configs.db == 'Aalto_mobile':
     test_configs.db_filename = configs.main_db
     test_configs.results_dir = configs.base_dir + '{}_results/'.format(test_configs.db)
