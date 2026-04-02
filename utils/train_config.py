@@ -28,7 +28,7 @@ configs.decimals = 4
 
 
 configs.K = 20  # number of Gaussian distributions
-configs.hlayers = 9
+configs.hlayers = 10
 configs.hlayers_rec = 2
 configs.hlayers_pos = 1
 configs.hheads = 10
