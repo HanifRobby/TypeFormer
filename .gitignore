@@ -1,6 +1,7 @@
 latest_experiment/
 preprocess/
 data/
+*.pdf
 
 
 # Byte-compiled / optimized / DLL files
