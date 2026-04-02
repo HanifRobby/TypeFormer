@@ -32,6 +32,7 @@ keys_db = pd.read_csv(file_raw, sep=",", index_col=False, header=None, encoding_
                       names = ['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE', 'IKI'])  #, nrows=rows)
 
 other_db = pd.read_csv(file_users, sep=",", index_col=False, header=None, encoding_errors='replace',
+                      on_bad_lines='skip',
                       names = ['TEST_SECTION_ID', 'SENTENCE_ID', 'PARTICIPANT_ID', 'USER_INPUT', 'INPUT_TIME', 'EDIT_DISTANCE',
                                'ERROR_RATE', 'WPM', 'INPUT_LENGTH', 'ERROR_LEN', 'POTENTIAL_WPM', 'POTENTIAL_LENGTH', 'DEVICE'])  # , nrows=sessions)
 
