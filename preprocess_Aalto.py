@@ -6,8 +6,8 @@ start = time.time()
 
 
 
-file_raw = '../DBs/Aalto_mobile/Data_Raw/keystrokes.csv'
-file_users = '../DBs/Aalto_mobile/Data_Raw/test_sections.csv'
+file_raw = 'data/raw/keystrokes.csv'
+file_users = 'data/raw/test_sections.csv'
 
 def extract_keys_features(session_key):
     Press = np.asarray(session_key.PRESS_TIME)
