@@ -36,13 +36,11 @@ other_db = pd.read_csv(file_users, sep=",", index_col=False, header=None, encodi
                       names = ['TEST_SECTION_ID', 'SENTENCE_ID', 'PARTICIPANT_ID', 'USER_INPUT', 'INPUT_TIME', 'EDIT_DISTANCE',
                                'ERROR_RATE', 'WPM', 'INPUT_LENGTH', 'ERROR_LEN', 'POTENTIAL_WPM', 'POTENTIAL_LENGTH', 'DEVICE'])  # , nrows=sessions)
 
-dummy_column = [0 for x in range(len(keys_db))]
-keys_db['PARTICIPANT_ID'] = dummy_column
-for test_section_id in other_db['TEST_SECTION_ID']:
-    participant_id = int(other_db.loc[other_db['TEST_SECTION_ID'] == test_section_id]['PARTICIPANT_ID'])
-    keys_db.loc[keys_db.TEST_SECTION_ID == test_section_id, 'PARTICIPANT_ID'] = (keys_db.PARTICIPANT_ID + participant_id).astype(int)
-    print("test_section_id", test_section_id)
-del dummy_column
+# Map TEST_SECTION_ID -> PARTICIPANT_ID using a merge (much faster than looping)
+section_to_participant = other_db[['TEST_SECTION_ID', 'PARTICIPANT_ID']].drop_duplicates('TEST_SECTION_ID')
+keys_db = keys_db.merge(section_to_participant, on='TEST_SECTION_ID', how='left')
+keys_db['PARTICIPANT_ID'] = keys_db['PARTICIPANT_ID'].fillna(0).astype(int)
+print("Mapped participant IDs")
 
 
 
