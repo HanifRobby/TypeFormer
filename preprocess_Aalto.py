@@ -28,6 +28,7 @@ def extract_keys_features(session_key):
 
 NUM_SESSIONS = 15
 keys_db = pd.read_csv(file_raw, sep=",", index_col=False, header=None, encoding_errors='replace',
+                      on_bad_lines='skip',
                       names = ['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE', 'IKI'])  #, nrows=rows)
 
 other_db = pd.read_csv(file_users, sep=",", index_col=False, header=None, encoding_errors='replace',
@@ -86,7 +87,7 @@ for index in indexes:
 keys_features_db.append(keys_feature_session)
 keys_features_db_users_ids.append(current_user)
 
-np.save('keystroke_all_list.npy', keys_features_db)
+np.save('data/Mobile_keys_db_6_features.npy', keys_features_db)
 
 keys_features_db_dict = {}
 current_user = indexes[0][0]
