@@ -33,7 +33,7 @@ for user in range(len(ds_e)):
     embeddings[str(user)] = {}
     print("Computing embeddings for user " + str(user))
     for enrolment_session in range(test_configs.total_num_sessions):
-        input_data = Variable(torch.from_numpy(np.reshape(testing_dataloader.dataset.Dataset[user][enrolment_session], (1, configs.sequence_length, configs.dimensionality)).astype(np.float64))).double()
+        input_data = Variable(torch.from_numpy(np.reshape(ds_e.Dataset[user][enrolment_session], (1, configs.sequence_length, configs.dimensionality)).astype(np.float64))).double()
         input_data = input_data.to(device)
         embedding = TransformerModel(input_data)
         embeddings[str(user)][str(enrolment_session)] = np.ravel(embedding.cpu().detach().numpy())
