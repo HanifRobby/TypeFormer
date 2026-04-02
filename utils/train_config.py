@@ -2,7 +2,7 @@ import argparse
 
 configs = argparse.ArgumentParser()
 
-configs.model_name = 'latest_experiment'
+configs.model_name = 'pretrained/preliminary_transformer_pretrained.pt'
 configs.base_dir = configs.model_name + '/'
 configs.model_dir = configs.base_dir
 configs.log_dir = configs.base_dir

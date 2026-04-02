@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import os
 from utils.train_config import configs
 from utils.test_config import test_configs
-from model.Model import HARTrans
+from model.Preliminary import HARTrans
 from sklearn.metrics.pairwise import euclidean_distances
 
 
