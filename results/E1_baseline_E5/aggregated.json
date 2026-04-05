@@ -9,6 +9,6 @@
   "n_users": 1000,
   "config": "E1_baseline",
   "E": 5,
-  "runtime_seconds": 543.3658857345581,
+  "runtime_seconds": 599.8123168945312,
   "global_threshold": 1.1963183423229127
 }

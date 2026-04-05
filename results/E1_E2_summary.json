@@ -11,22 +11,22 @@
       "n_users": 1000,
       "config": "E1_baseline",
       "E": 5,
-      "runtime_seconds": 543.3658857345581,
+      "runtime_seconds": 599.8123168945312,
       "global_threshold": 1.1963183423229127
     },
     "E2": {
-      "avg_eer": 0.2020865865865866,
-      "std_eer": 0.14367321662058324,
-      "median_eer": 0.18733733733733735,
-      "worst_eer": 0.7859859859859859,
+      "avg_eer": 0.20076076076076077,
+      "std_eer": 0.14527223485724525,
+      "median_eer": 0.1860860860860861,
+      "worst_eer": 0.7923923923923923,
       "best_eer": 0.0,
-      "avg_far_1": 0.8002,
-      "avg_frr_1": 0.005322322322322319,
+      "avg_far_1": 0.796,
+      "avg_frr_1": 0.00537337337337337,
       "n_users": 1000,
       "config": "E2_preprocessing",
       "E": 5,
-      "runtime_seconds": 548.2763097286224,
-      "global_threshold": 1.104438273696203
+      "runtime_seconds": 752.1472425460815,
+      "global_threshold": 1.096638280250377
     }
   }
 }
