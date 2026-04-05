@@ -2,16 +2,15 @@ import argparse
 
 configs = argparse.ArgumentParser()
 
-configs.model_name = 'latest_experiment'
-configs.base_dir = configs.model_name + '/'
+configs.model_name = "latest_experiment"
+configs.base_dir = configs.model_name + "/"
 configs.model_dir = configs.base_dir
 configs.log_dir = configs.base_dir
-configs.data_dir = 'data/'
-configs.log_filename = configs.log_dir + configs.model_name + '_log.txt'
-configs.model_filename = 'pretrained/TypeFormer_pretrained.pt'
+configs.data_dir = "data/"
+configs.log_filename = configs.log_dir + configs.model_name + "_log.txt"
+configs.model_filename = configs.base_dir + "TypeFormer_KDPrint_retrained.pt"
 
-
-configs.main_db = configs.data_dir + 'Mobile_keys_db_6_features.npy'
+configs.main_db = "src/data/processed/Mobile_keys_db_new.npy"
 configs.total_users = 60000
 configs.num_training_subjects = 30000
 configs.num_validation_subjects = 400
@@ -34,5 +33,3 @@ configs.hlayers_pos = 1
 configs.hheads = 10
 configs.vlayers = 1
 configs.vheads = 5
-
-
