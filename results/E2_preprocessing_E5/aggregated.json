@@ -1,0 +1,14 @@
+{
+  "avg_eer": 0.2020865865865866,
+  "std_eer": 0.14367321662058324,
+  "median_eer": 0.18733733733733735,
+  "worst_eer": 0.7859859859859859,
+  "best_eer": 0.0,
+  "avg_far_1": 0.8002,
+  "avg_frr_1": 0.005322322322322319,
+  "n_users": 1000,
+  "config": "E2_preprocessing",
+  "E": 5,
+  "runtime_seconds": 548.2763097286224,
+  "global_threshold": 1.104438273696203
+}
