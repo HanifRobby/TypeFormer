@@ -35,7 +35,7 @@ class KDPrintPreprocessor:
         self.sigma = all_timing.std(axis=0)  # shape (4,)
 
         # Numerical stability: use slightly larger epsilon if sigma is tiny
-        self.sigma = np.where(self.sigma < 1e-6, 1e-6, self.sigma)
+        self.sigma = np.where(self.sigma < 1e-4, 1e-4, self.sigma)
 
         self._is_fitted = True
         return self
