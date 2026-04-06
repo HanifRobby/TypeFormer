@@ -126,44 +126,58 @@ class AdaptiveThresholdEstimator:
         k_range: np.ndarray,
         stage_label: str = "",
     ) -> Tuple[float, float]:
-        """Run grid search over k_range and return (best_k, best_eer)."""
-        from src.evaluation.metrics import compute_eer
-
+        """
+        Grid search: untuk setiap k, hitung FAR dan FRR di threshold T_user
+        (bukan EER threshold-independent dari ROC curve).
+        
+        Objective: minimasi rata-rata (FAR + FRR) / 2 di threshold T_user.
+        Ini ekuivalen dengan mencari k di mana T_user paling mendekati 
+        titik EER sesungguhnya untuk rata-rata pengguna.
+        """
         best_k = self.k
-        best_eer = 1.0
+        best_score = 1.0
         results = []
 
         for k_cand in k_range:
             self.k = k_cand
-            user_eers = []
+            user_scores = []
 
             for user_id, data in val_data.items():
                 template = self.estimate_user_threshold(data["enrol"])
+                T = template["T_user"]
 
-                genuine_scores = [
+                # Jarak genuine: harapan di bawah T_user
+                genuine_dists = [
                     float(np.linalg.norm(z - template["z_mean"]))
                     for z in data["genuine"]
                 ]
-                impostor_scores = [
+                # Jarak impostor: harapan di atas T_user
+                impostor_dists = [
                     float(np.linalg.norm(z - template["z_mean"]))
                     for z in data["impostor"]
                 ]
 
-                user_eer = compute_eer(genuine_scores, impostor_scores)
-                user_eers.append(user_eer)
+                # FAR: fraksi impostor yang lolos (dist <= T_user)
+                far = sum(1 for d in impostor_dists if d <= T) / len(impostor_dists)
+                # FRR: fraksi genuine yang ditolak (dist > T_user)
+                frr = sum(1 for d in genuine_dists  if d >  T) / len(genuine_dists)
 
-            avg_eer = float(np.mean(user_eers))
-            results.append((k_cand, avg_eer))
+                # Objective per user: rata-rata FAR dan FRR di threshold ini
+                user_scores.append((far + frr) / 2.0)
 
-            if avg_eer < best_eer:
-                best_eer = avg_eer
+            avg_score = float(np.mean(user_scores))
+            results.append((k_cand, avg_score))
+
+            if avg_score < best_score:
+                best_score = avg_score
                 best_k = k_cand
 
         self.k = best_k
 
-        print(f"\n  [{stage_label} search] k optimization (best k={best_k:.2f}, EER={best_eer*100:.4f}%):")
-        for k_val, eer in results:
+        print(f"\n  [{stage_label} search] k optimization "
+            f"(best k={best_k:.2f}, avg (FAR+FRR)/2 = {best_score*100:.4f}%):")
+        for k_val, score in results:
             marker = " ◀" if abs(k_val - best_k) < 1e-6 else ""
-            print(f"    k={k_val:.2f}: EER={eer*100:.4f}%{marker}")
+            print(f"    k={k_val:.2f}: (FAR+FRR)/2 = {score*100:.4f}%{marker}")
 
-        return best_k, best_eer
+        return best_k, best_score
