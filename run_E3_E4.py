@@ -42,19 +42,20 @@ for E in E_VALUES:
         E=E, L=L, use_kdprint=False, use_adaptive=True, output_dir=RESULTS_DIR
     )
     
-    r4 = run_single_experiment(
-        'E4_full_system', model, test_users_clean, val_users_clean,
-        E=E, L=L, use_kdprint=True, use_adaptive=True, buffer_size=BUFFER_SIZE, output_dir=RESULTS_DIR
-    )
     
-    all_results[E] = {'E3': r3, 'E4': r4}
+    # r4 = run_single_experiment(
+    #     'E4_full_system', model, test_users_clean, val_users_clean,
+    #     E=E, L=L, use_kdprint=True, use_adaptive=True, buffer_size=BUFFER_SIZE, output_dir=RESULTS_DIR
+    # )
+    
+    all_results[E] = {'E3': r3}
 
 print("\n\nSUMMARY TABLE (Average EER %)")
-print(f"{'E':<5} {'E3 (Adaptive)':>15} {'E4 (Full Sys)':>15}")
+print(f"{'E':<5} {'E3 (Adaptive)':>15}")
 print("-" * 40)
 for E, configs in all_results.items():
     row = f"{E:<5}"
-    for config in ['E3', 'E4']:
+    for config in ['E3']:
         eer_pct = configs[config]['avg_eer'] * 100
         row += f"{eer_pct:>15.4f}"
     print(row)
