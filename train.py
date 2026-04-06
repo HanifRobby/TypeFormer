@@ -44,7 +44,7 @@ ds_v = KeystrokeSessionTriplet(
 train_dataloader = DataLoader(ds_t, batch_size=configs.batch_size_train, shuffle=True)
 val_dataloader = DataLoader(ds_v, batch_size=configs.batch_size_val, shuffle=True)
 
-TransformerModel = HARTrans(configs).float()
+TransformerModel = HARTrans(configs).double()
 
 optimizer = torch.optim.Adam(
     TransformerModel.parameters(), lr=0.001, betas=(0.9, 0.999)
@@ -56,9 +56,9 @@ criterion = torch.jit.script(TripletLoss())
 def inner_ops(input_):
     optimizer.zero_grad()
     anchor_sgm, positive_sgm, negative_sgm = (
-        Variable(input_[0]).float().to(device),
-        Variable(input_[1]).float().to(device),
-        Variable(input_[2]).float().to(device),
+        Variable(input_[0]).to(device),
+        Variable(input_[1]).to(device),
+        Variable(input_[2]).to(device),
     )
     anchor_out, positive_out, negative_out = (
         TransformerModel(anchor_sgm),

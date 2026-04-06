@@ -85,21 +85,21 @@ class KeystrokeSessionTriplet:
         sample_idx = random.randint(0, self.max_num_sample_per_user - 1)
         self.user_idx_list.append(user_idx)
         self.sample_idx_list.append(sample_idx)
-        anchor_segment = self.Dataset[user_idx][sample_idx].astype(np.float32)
+        anchor_segment = self.Dataset[user_idx][sample_idx].astype(np.double)
         self.anchor_list.append((user_idx, sample_idx))
 
         sample_idx_p = random.randint(0, self.max_num_sample_per_user - 1)
         while sample_idx_p == sample_idx:
             sample_idx_p = random.randint(0, self.max_num_sample_per_user - 1)
         self.sample_idx_p_list.append(sample_idx_p)
-        positive_segment = self.Dataset[user_idx][sample_idx_p].astype(np.float32)
+        positive_segment = self.Dataset[user_idx][sample_idx_p].astype(np.double)
         self.positive_list.append((user_idx, sample_idx_p))
 
         sample_idx_n = random.randint(0, self.max_num_sample_per_user - 1)
         user_idx_n = random.randint(0, self.num_users - 1)
         while user_idx_n == user_idx:
             user_idx_n = random.randint(0, self.num_users - 1)
-        negative_segment = self.Dataset[user_idx_n][sample_idx_n].astype(np.float32)
+        negative_segment = self.Dataset[user_idx_n][sample_idx_n].astype(np.double)
         self.user_idx_n_list.append(user_idx_n)
         self.sample_idx_n_list.append(sample_idx_n)
         self.negative_list.append((user_idx_n, sample_idx_n))
