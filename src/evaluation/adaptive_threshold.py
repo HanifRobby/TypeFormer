@@ -102,7 +102,7 @@ class AdaptiveThresholdEstimator:
         """
         # Stage 1: Coarse search
         if k_range is None:
-            k_range = np.arange(0.5, 4.25, 0.25)
+            k_range = np.arange(4, 15, 0.25)
 
         best_k, best_eer = self._grid_search(val_data, k_range, stage_label="Coarse")
 
