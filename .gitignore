@@ -1,5 +1,7 @@
 latest_experiment/
 results/
+finetuned/
+finetuned_holdonly/
 preprocess/
 data/
 *.pdf
