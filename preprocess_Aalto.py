@@ -4,8 +4,28 @@ import time
 
 start = time.time()
 
-file_raw = 'data/raw/keystrokes.csv'
-file_users = 'data/raw/test_sections.csv'
+
+
+file_raw = './data/Aalto_mobile/Data_Raw/keystrokes.csv'
+file_users = './data/Aalto_mobile/Data_Raw/test_sections.csv'
+
+KEYS_COLUMNS = ['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE', 'IKI']
+USERS_COLUMNS = ['TEST_SECTION_ID', 'SENTENCE_ID', 'PARTICIPANT_ID', 'USER_INPUT', 'INPUT_TIME', 'EDIT_DISTANCE',
+                 'ERROR_RATE', 'WPM', 'INPUT_LENGTH', 'ERROR_LEN', 'POTENTIAL_WPM', 'POTENTIAL_LENGTH', 'DEVICE']
+
+
+def read_csv_with_bad_line_fallback(path, **kwargs):
+    # Fast path: C engine with malformed-line skipping (newer pandas).
+    try:
+        return pd.read_csv(path, on_bad_lines='skip', **kwargs)
+    except (TypeError, ValueError):
+        pass
+    # Compatibility path: python engine with on_bad_lines (mid pandas versions).
+    try:
+        return pd.read_csv(path, engine='python', on_bad_lines='skip', **kwargs)
+    except TypeError:
+        # Legacy compatibility path for older pandas versions.
+        return pd.read_csv(path, engine='python', error_bad_lines=False, warn_bad_lines=False, **kwargs)
 
 def extract_keys_features(session_key):
     Press = np.asarray(session_key.PRESS_TIME)
@@ -25,77 +45,85 @@ def extract_keys_features(session_key):
 # sessions = 150 # 4*8000
 
 NUM_SESSIONS = 15
-keys_db = pd.read_csv(file_raw, sep=",", index_col=False, header=None, encoding_errors='replace',
-                      on_bad_lines='skip',
-                      names = ['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE', 'IKI'])  #, nrows=rows)
+keys_db = read_csv_with_bad_line_fallback(
+    file_raw,
+    sep=",",
+    index_col=False,
+    header=None,
+    encoding_errors='replace',
+    names=KEYS_COLUMNS,
+    usecols=['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE']
+)  #, nrows=rows)
 
-other_db = pd.read_csv(file_users, sep=",", index_col=False, header=None, encoding_errors='replace',
-                      on_bad_lines='skip',
-                      names = ['TEST_SECTION_ID', 'SENTENCE_ID', 'PARTICIPANT_ID', 'USER_INPUT', 'INPUT_TIME', 'EDIT_DISTANCE',
-                               'ERROR_RATE', 'WPM', 'INPUT_LENGTH', 'ERROR_LEN', 'POTENTIAL_WPM', 'POTENTIAL_LENGTH', 'DEVICE'])  # , nrows=sessions)
+other_db = read_csv_with_bad_line_fallback(
+    file_users,
+    sep=",",
+    index_col=False,
+    header=None,
+    encoding_errors='replace',
+    names=USERS_COLUMNS,
+    usecols=['TEST_SECTION_ID', 'PARTICIPANT_ID']
+)  # , nrows=sessions)
 
-# Map TEST_SECTION_ID -> PARTICIPANT_ID using a merge (much faster than looping)
-section_to_participant = other_db[['TEST_SECTION_ID', 'PARTICIPANT_ID']].drop_duplicates('TEST_SECTION_ID')
-keys_db = keys_db.merge(section_to_participant, on='TEST_SECTION_ID', how='left')
-keys_db['PARTICIPANT_ID'] = keys_db['PARTICIPANT_ID'].fillna(0).astype(int)
-print("Mapped participant IDs")
+# Normalize potentially mixed-type IDs/timestamps from malformed rows.
+keys_db['KEYSTROKE_ID'] = pd.to_numeric(keys_db['KEYSTROKE_ID'], errors='coerce')
+keys_db['PRESS_TIME'] = pd.to_numeric(keys_db['PRESS_TIME'], errors='coerce')
+keys_db['RELEASE_TIME'] = pd.to_numeric(keys_db['RELEASE_TIME'], errors='coerce')
+keys_db['TEST_SECTION_ID'] = pd.to_numeric(keys_db['TEST_SECTION_ID'], errors='coerce')
+keys_db['KEYCODE'] = pd.to_numeric(keys_db['KEYCODE'], errors='coerce')
+keys_db = keys_db.dropna(subset=['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'TEST_SECTION_ID', 'KEYCODE']).copy()
+keys_db['KEYSTROKE_ID'] = keys_db['KEYSTROKE_ID'].astype(np.int64)
+keys_db['PRESS_TIME'] = keys_db['PRESS_TIME'].astype(np.int64)
+keys_db['RELEASE_TIME'] = keys_db['RELEASE_TIME'].astype(np.int64)
+keys_db['TEST_SECTION_ID'] = keys_db['TEST_SECTION_ID'].astype(np.int64)
+keys_db['KEYCODE'] = keys_db['KEYCODE'].astype(np.int64)
 
+other_db['TEST_SECTION_ID'] = pd.to_numeric(other_db['TEST_SECTION_ID'], errors='coerce')
+other_db['PARTICIPANT_ID'] = pd.to_numeric(other_db['PARTICIPANT_ID'], errors='coerce')
+other_db = other_db.dropna(subset=['TEST_SECTION_ID', 'PARTICIPANT_ID']).copy()
+other_db['TEST_SECTION_ID'] = other_db['TEST_SECTION_ID'].astype(np.int64)
+other_db['PARTICIPANT_ID'] = other_db['PARTICIPANT_ID'].astype(np.int64)
 
+participant_map = other_db[['TEST_SECTION_ID', 'PARTICIPANT_ID']].drop_duplicates(subset=['TEST_SECTION_ID'])
+keys_db = keys_db.merge(participant_map, on='TEST_SECTION_ID', how='left', sort=False)
+keys_db = keys_db[keys_db['PARTICIPANT_ID'].notna()].copy()
+keys_db['PARTICIPANT_ID'] = keys_db['PARTICIPANT_ID'].astype(int)
 
-
-keys_db = keys_db[(keys_db.PARTICIPANT_ID != 0)]
-
-# Optimize filtering (vectorized instead of row-by-row iteration)
-print("Filtering participants...")
-valid_parts = keys_db.groupby('PARTICIPANT_ID')['TEST_SECTION_ID'].nunique()
-valid_parts = valid_parts[valid_parts >= NUM_SESSIONS].index
-keys_db = keys_db[keys_db['PARTICIPANT_ID'].isin(valid_parts)]
-print(f"Filtered to {len(valid_parts)} valid participants")
-
-keys_db = keys_db.set_index(['PARTICIPANT_ID', 'TEST_SECTION_ID'])
-keys_db = keys_db.sort_index()
-
-keys_features_db = []
-keys_features_db_users_ids = []
-keys_features_db_dict = {}
-
-current_user = None
-keys_feature_session = []
-keys_feature_session_dict = {}
-
-print("Extracting features (optimized)...")
-for index, session_key in keys_db.groupby(level=['PARTICIPANT_ID', 'TEST_SECTION_ID']):
-    user_id = index[0]
-    session_id = index[1]
-
-    if current_user is None:
-        current_user = user_id
-
-    keys_features = extract_keys_features(session_key)
-
-    if current_user != user_id:
-        if len(keys_feature_session) >= NUM_SESSIONS:
-            keys_features_db.append(keys_feature_session)
-            keys_features_db_users_ids.append(current_user)
-            keys_features_db_dict[str(current_user)] = keys_feature_session_dict
-            
-        current_user = user_id
-        keys_feature_session = []
-        keys_feature_session_dict = {}
-        
-    keys_feature_session.append(keys_features)
-    keys_feature_session_dict[str(session_id)] = keys_features
-
-if len(keys_feature_session) >= NUM_SESSIONS:
-    keys_features_db.append(keys_feature_session)
-    keys_features_db_users_ids.append(current_user)
-    keys_features_db_dict[str(current_user)] = keys_feature_session_dict
+participant_sessions = keys_db.groupby('PARTICIPANT_ID')['TEST_SECTION_ID'].nunique()
+valid_participants = participant_sessions[participant_sessions >= NUM_SESSIONS].index
+keys_db = keys_db[keys_db['PARTICIPANT_ID'].isin(valid_participants)].copy()
+keys_db = keys_db.sort_values(['PARTICIPANT_ID', 'TEST_SECTION_ID', 'KEYSTROKE_ID'], kind='mergesort')
 
 end = time.time()
-time_elapsed = (end-start)/60
-print(f"Time elapsed: {time_elapsed:.2f} minutes")
 
-np.save('data/Mobile_keys_db_6_features.npy', np.array(keys_features_db, dtype=object))
+time_elapsed = (end-start)/60
+print("time_elapsed:", time_elapsed)
+
+
+keys_feature_session = []
+keys_feature_session_dict = {}
+keys_features_db = []
+keys_features_db_dict = {}
+current_user = None
+for (participant_id, test_section_id), session_key in keys_db.groupby(['PARTICIPANT_ID', 'TEST_SECTION_ID'], sort=True):
+    if current_user is None:
+        current_user = participant_id
+    elif current_user != participant_id:
+        keys_features_db.append(keys_feature_session)
+        keys_features_db_dict[str(current_user)] = keys_feature_session_dict
+        keys_feature_session = []
+        keys_feature_session_dict = {}
+        current_user = participant_id
+    keys_features = extract_keys_features(session_key)
+    keys_feature_session.append(keys_features)
+    keys_feature_session_dict[str(test_section_id)] = keys_features
+
+if current_user is not None:
+    keys_features_db.append(keys_feature_session)
+    keys_features_db_dict[str(current_user)] = keys_feature_session_dict
+
+# Ragged nested sessions/users require object dtype for stable serialization.
+np.save('keystroke_all_list.npy', np.asarray(keys_features_db, dtype=object), allow_pickle=True)
 np.save('keystroke_all_dict.npy', keys_features_db_dict)
 
 
