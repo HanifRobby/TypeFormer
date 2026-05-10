@@ -3,6 +3,7 @@ preprocess/
 data/
 *.pdf
 *.npy
+*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

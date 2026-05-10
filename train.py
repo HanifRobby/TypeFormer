@@ -10,7 +10,7 @@ from utils.misc import compute_eer, TripletLoss
 import time
 
 
-from model.Preliminary import HARTrans
+from model.Model import HARTrans
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
