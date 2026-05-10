@@ -8,7 +8,7 @@ from model.Model import HARTrans
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-device = torch.device("cuda:0" if torch.cuda.is_avaible() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 os.makedirs(test_configs.results_dir, exist_ok=True)
 

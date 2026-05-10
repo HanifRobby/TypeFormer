@@ -34,4 +34,4 @@ for i in range(int(len(user_embeddings)/15)):
 ax.grid()
 ax.legend(loc = 'lower right', fontsize=fontsizelegend)
 ax.tick_params(axis='both', labelsize=fontsizeticks)
-plt.savefig('tsne.pdf')
+plt.savefig('./results/analysis/tsne.pdf')
