@@ -6,8 +6,8 @@ start = time.time()
 
 
 
-file_raw = './data/Aalto_mobile/Data_Raw/keystrokes.csv'
-file_users = './data/Aalto_mobile/Data_Raw/test_sections.csv'
+file_raw = './data/raw/keystrokes.csv'
+file_users = './data/raw/test_sections.csv'
 
 KEYS_COLUMNS = ['KEYSTROKE_ID', 'PRESS_TIME', 'RELEASE_TIME', 'LETTER', 'TEST_SECTION_ID', 'KEYCODE', 'IKI']
 USERS_COLUMNS = ['TEST_SECTION_ID', 'SENTENCE_ID', 'PARTICIPANT_ID', 'USER_INPUT', 'INPUT_TIME', 'EDIT_DISTANCE',
@@ -97,7 +97,7 @@ keys_db = keys_db.sort_values(['PARTICIPANT_ID', 'TEST_SECTION_ID', 'KEYSTROKE_I
 end = time.time()
 
 time_elapsed = (end-start)/60
-print("time_elapsed:", time_elapsed)
+print(f"{time_elapsed:.2f} minutes")
 
 
 keys_feature_session = []
@@ -123,8 +123,8 @@ if current_user is not None:
     keys_features_db_dict[str(current_user)] = keys_feature_session_dict
 
 # Ragged nested sessions/users require object dtype for stable serialization.
-np.save('keystroke_all_list.npy', np.asarray(keys_features_db, dtype=object), allow_pickle=True)
-np.save('keystroke_all_dict.npy', keys_features_db_dict)
+np.save('data/preprocessed/keystroke_all_list.npy', np.asarray(keys_features_db, dtype=object), allow_pickle=True)
+np.save('data/preprocessed/keystroke_all_dict.npy', keys_features_db_dict)
 
 
 # file_path = 'D:/Giuseppe/DBs/Mobile_keys_db_6_features.npy'
