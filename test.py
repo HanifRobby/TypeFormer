@@ -1,8 +1,6 @@
 import torch
 import numpy as np
 from utils.misc import KeystrokeSessionTriplet, compute_eer
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import os
 from utils.train_config import configs
 from utils.test_config import test_configs
@@ -10,16 +8,16 @@ from model.Model import HARTrans
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_avaible() else "cpu")
 
 os.makedirs(test_configs.results_dir, exist_ok=True)
 
 
 TransformerModel = HARTrans(configs).double()
 
-keystroke_dataset = np.load(test_configs.db_filename, allow_pickle=True)
+keystroke_dataset = list(np.load(test_configs.db_filename, allow_pickle=True))
 
-TransformerModel.load_state_dict(torch.load(configs.model_filename))
+TransformerModel.load_state_dict(torch.load(configs.model_filename, map_location=device))
 TransformerModel.eval()
 
 ds_e = KeystrokeSessionTriplet(keystroke_dataset[test_configs.num_validation_subjects:test_configs.num_validation_subjects+test_configs.num_test_subjects], length=test_configs.num_test_subjects, db=test_configs.db)
@@ -29,14 +27,17 @@ TransformerModel = TransformerModel.to(device)
 
 
 embeddings = {}
-for user in range(len(ds_e)):
-    embeddings[str(user)] = {}
-    print("Computing embeddings for user " + str(user))
-    for enrolment_session in range(test_configs.total_num_sessions):
-        input_data = Variable(torch.from_numpy(np.reshape(testing_dataloader.dataset.Dataset[user][enrolment_session], (1, configs.sequence_length, configs.dimensionality)).astype(np.float64))).double()
-        input_data = input_data.to(device)
-        embedding = TransformerModel(input_data)
-        embeddings[str(user)][str(enrolment_session)] = np.ravel(embedding.cpu().detach().numpy())
+with torch.no_grad():
+    for user in range(len(ds_e)):
+        embeddings[str(user)] = {}
+        print("Computing embeddings for user " + str(user))
+        for enrolment_session in range(test_configs.total_num_sessions):
+            session_data = ds_e.Dataset[user][enrolment_session]
+            input_data = torch.from_numpy(
+                np.reshape(session_data, (1, configs.sequence_length, configs.dimensionality)).astype(np.float64)
+            ).double().to(device)
+            embedding = TransformerModel(input_data)
+            embeddings[str(user)][str(enrolment_session)] = np.ravel(embedding.cpu().numpy())
 
 np.save(test_configs.results_dir + "test_embeddings_all_users.npy", embeddings)
 embeddings = np.load(test_configs.results_dir + "test_embeddings_all_users.npy", allow_pickle=True).item()
@@ -65,8 +66,15 @@ print("Global EER (%):", eer)
 
 eers_per_user = []
 for user in range(test_configs.num_test_subjects):
-    scores = np.concatenate((np.ravel(genuine_distances[user * test_configs.test_samples:test_configs.test_samples * (user + 1)]), np.ravel(impostor_distances[user * (test_configs.num_test_subjects-1):(test_configs.num_test_subjects-1) * (user + 1)])))
-    labels = np.array([0 for x in np.ravel(genuine_distances[user * test_configs.test_samples:test_configs.test_samples * (user + 1)])] + [1 for x in np.ravel(impostor_distances[user * (test_configs.num_test_subjects-1):(test_configs.num_test_subjects-1) * (user + 1)])])
+    genuine_start = user * test_configs.test_samples
+    genuine_end = test_configs.test_samples * (user + 1)
+    impostor_span = (test_configs.num_test_subjects - 1) * test_configs.impostor_test_samples
+    impostor_start = user * impostor_span
+    impostor_end = (user + 1) * impostor_span
+    user_genuine = np.ravel(genuine_distances[genuine_start:genuine_end])
+    user_impostor = np.ravel(impostor_distances[impostor_start:impostor_end])
+    scores = np.concatenate((user_genuine, user_impostor))
+    labels = np.array([0 for x in user_genuine] + [1 for x in user_impostor])
     eer = np.round(100*compute_eer(labels, scores)[0], 2)
     eers_per_user.append(eer)
 mean_eer_per_user = np.mean(eers_per_user)

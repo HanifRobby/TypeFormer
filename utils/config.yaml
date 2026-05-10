@@ -1,0 +1,64 @@
+# =============================================================================
+# configs/experiment.yaml
+# Single source of truth for ALL hyperparameters and paths.
+# =============================================================================
+
+# --- Dataset ---
+dataset:
+  raw_keystrokes: "data/raw/keystrokes.csv"
+  raw_test_sections: "data/raw/test_sections.csv"
+  preprocessed_npy: "data/processed/aalto_all_users.npy"    # 5-feature, per-user list
+  user_ids_npy: "data/processed/aalto_user_ids.npy"         # ordered PARTICIPANT_IDs
+  seq_length: 50
+  num_features: 6          # hold, inter_press, inter_release, inter_key, keycode/255, keyname
+  min_sessions: 15         # minimum sessions per user
+
+  # Index-based split matching original TypeFormer repo:
+  #   val:   dataset[0:400]       (first 400 users)
+  #   test:  dataset[400:1400]    (next 1000 users)
+  #   train: dataset[30000:60000] (last 30000 users)
+  split:
+    val_start: 0
+    val_end: 400
+    test_start: 400
+    test_end: 1400
+    train_start: 30000
+    train_end: 60000
+
+# --- Fine-Tuning ---
+fine_tuning:
+  lr: 0.0005
+  betas: [0.9, 0.999]
+  triplet_margin: 1
+  batch_size: 1024
+  grad_accum_steps: 1      # effective batch = batch_size × grad_accum_steps
+  patience: 20
+  max_epochs: 100
+  triplets_per_epoch: 30000
+  num_workers: 4
+
+# --- Evaluation ---
+evaluation:
+  enrolment_sessions: [1, 2, 5, 7, 10]
+  genuine_verify_sessions: 5
+  impostor_sessions: 999    # max impostors per user
+  alpha: 0.05
+  bonferroni_comparisons: 5
+
+# --- Model Architecture (matches typeformer/utils/train_config.py) ---
+model:
+  pretrained_weights: "/pretrained/TypeFormer_pretrained.pt"
+  output_dim: 64
+  sequence_length: 50
+  dimensionality: 5
+  K: 20
+  hlayers: 9
+  hlayers_rec: 2
+  hlayers_pos: 1
+  hheads: 10
+  vlayers: 1
+  vheads: 5
+
+# --- Reproducibility ---
+seed: 42
+device: "cuda"
