@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import torch
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils.misc import KeystrokeSessionTriplet
@@ -32,73 +31,120 @@ keystroke_dataset = list(np.load(configs.main_db, allow_pickle=True))
 ds_t = KeystrokeSessionTriplet(keystroke_dataset[configs.num_training_subjects:2*configs.num_training_subjects], data_length=configs.sequence_length, length=len(keystroke_dataset))
 ds_v = KeystrokeSessionTriplet(keystroke_dataset[:configs.num_validation_subjects], data_length=configs.sequence_length, length=len(keystroke_dataset))
 
-train_dataloader = DataLoader(ds_t, batch_size=configs.batch_size_train, shuffle=True)
-val_dataloader = DataLoader(ds_v, batch_size=configs.batch_size_val, shuffle=True)
+use_cuda = device.type == "cuda"
+num_workers = int(getattr(configs, "num_workers", 4))
+pin_memory = use_cuda
+dataloader_common_kwargs = {
+    "num_workers": num_workers,
+    "pin_memory": pin_memory,
+}
+if num_workers > 0:
+    dataloader_common_kwargs["persistent_workers"] = True
+    dataloader_common_kwargs["prefetch_factor"] = 2
 
-TransformerModel = HARTrans(configs).double()
+train_dataloader = DataLoader(
+    ds_t,
+    batch_size=configs.batch_size_train,
+    shuffle=True,
+    **dataloader_common_kwargs
+)
+val_dataloader = DataLoader(
+    ds_v,
+    batch_size=configs.batch_size_val,
+    shuffle=True,
+    **dataloader_common_kwargs
+)
+
+TransformerModel = HARTrans(configs).float()
 
 optimizer = torch.optim.Adam(TransformerModel.parameters(), lr=0.001, betas=(0.9, 0.999))
 TransformerModel = TransformerModel.to(device)
-criterion = torch.jit.script(TripletLoss())
+criterion = TripletLoss().to(device)
 
 
 def inner_ops(input_, mode='train'):
     if mode == 'train':
-        optimizer.zero_grad()
-    anchor_sgm, positive_sgm, negative_sgm = (Variable(input_[0]).to(device),
-                                              Variable(input_[1]).to(device),
-                                              Variable(input_[2]).to(device))
+        optimizer.zero_grad(set_to_none=True)
+    anchor_sgm, positive_sgm, negative_sgm = (
+        input_[0].to(device, dtype=torch.float32, non_blocking=pin_memory),
+        input_[1].to(device, dtype=torch.float32, non_blocking=pin_memory),
+        input_[2].to(device, dtype=torch.float32, non_blocking=pin_memory),
+    )
     anchor_out, positive_out, negative_out = (TransformerModel(anchor_sgm),
                                               TransformerModel(positive_sgm),
                                               TransformerModel(negative_sgm))
     loss = criterion(anchor_out, positive_out, negative_out)
     if mode == 'train':
-        loss.backward(retain_graph=True)
+        loss.backward()
         optimizer.step()
-    running_loss = np.round(loss.item(), configs.decimals)
-    pred_a, pred_p, pred_n = (np.round(anchor_out.cpu().detach().numpy(), configs.decimals),
-                              np.round(positive_out.cpu().detach().numpy(), configs.decimals),
-                              np.round(negative_out.cpu().detach().numpy(), configs.decimals))
-    scores_g = np.sqrt(np.add.reduce(np.square(pred_a - pred_p), 1))
-    scores_i = np.sqrt(np.add.reduce(np.square(pred_a - pred_n), 1))
-    labels = np.array([0 for x in range(len(scores_g))] + [1 for x in range(len(scores_i))])
-    eer = np.round(compute_eer(labels, np.concatenate((scores_g, scores_i)))[0], configs.decimals)
+    with torch.no_grad():
+        scores_g = torch.norm(anchor_out - positive_out, dim=1).cpu().numpy()
+        scores_i = torch.norm(anchor_out - negative_out, dim=1).cpu().numpy()
 
-    return eer, running_loss
+    return loss.item(), scores_g, scores_i
+
+
+def compute_epoch_eer(genuine_scores, impostor_scores):
+    labels = np.array([0 for _ in range(len(genuine_scores))] + [1 for _ in range(len(impostor_scores))])
+    scores = np.concatenate((genuine_scores, impostor_scores))
+    eer = compute_eer(labels, scores)[0]
+    return np.round(eer, configs.decimals)
 
 
 def train_one_epoch(epoch):
     # Make sure gradient tracking is on, and do a pass over the data
     TransformerModel.train()
-    epoch_eers = []
-    total_loss_per_epoch = 0.
-    train_bar = tqdm(train_dataloader, total=len(train_dataloader), desc=f"Epoch {epoch + 1}/{configs.epochs} [Train]", leave=False, dynamic_ncols=True)
-    for i, (anchor_sgm, positive_sgm, negative_sgm) in enumerate(train_bar, 0):
-        eer_, running_loss_ = inner_ops((anchor_sgm, positive_sgm, negative_sgm))
-        epoch_eers.append(eer_)
-        total_loss_per_epoch = total_loss_per_epoch + running_loss_
-        train_bar.set_postfix(loss=running_loss_, eer=f"{100 * eer_:.2f}%")
-    last_batch_eer = np.round(epoch_eers[-1], configs.decimals)
-    return total_loss_per_epoch, last_batch_eer
+    losses = []
+    epoch_genuine_scores = []
+    epoch_impostor_scores = []
+    train_steps = min(len(train_dataloader), int(getattr(configs, "batches_per_epoch", len(train_dataloader))))
+    train_steps = max(train_steps, 1)
+
+    train_bar = tqdm(
+        zip(range(train_steps), train_dataloader),
+        total=train_steps,
+        desc=f"Epoch {epoch + 1}/{configs.epochs} [Train]",
+        leave=False,
+        dynamic_ncols=True,
+    )
+    for _, (anchor_sgm, positive_sgm, negative_sgm) in train_bar:
+        running_loss_, scores_g, scores_i = inner_ops((anchor_sgm, positive_sgm, negative_sgm), mode='train')
+        losses.append(running_loss_)
+        epoch_genuine_scores.append(scores_g)
+        epoch_impostor_scores.append(scores_i)
+        train_bar.set_postfix(loss=f"{np.mean(losses):.4f}")
+
+    mean_loss = np.round(float(np.mean(losses)), configs.decimals)
+    epoch_eer = compute_epoch_eer(np.concatenate(epoch_genuine_scores), np.concatenate(epoch_impostor_scores))
+    return mean_loss, epoch_eer
 
 def eval_one_epoch(epoch):
-    epoch_eers = []
-    total_loss_per_epoch = 0.
+    losses = []
+    epoch_genuine_scores = []
+    epoch_impostor_scores = []
     TransformerModel.eval()
-    val_bar = tqdm(val_dataloader, total=len(val_dataloader), desc=f"Epoch {epoch + 1}/{configs.epochs} [Val]", leave=False, dynamic_ncols=True)
+    val_steps = min(len(val_dataloader), int(getattr(configs, "val_batches_per_epoch", len(val_dataloader))))
+    val_steps = max(val_steps, 1)
+    val_bar = tqdm(
+        zip(range(val_steps), val_dataloader),
+        total=val_steps,
+        desc=f"Epoch {epoch + 1}/{configs.epochs} [Val]",
+        leave=False,
+        dynamic_ncols=True,
+    )
     with torch.no_grad():
-        for i, (anchor_sgm, positive_sgm, negative_sgm) in enumerate(val_bar, 0):
-            eer_, running_loss_ = inner_ops((anchor_sgm, positive_sgm, negative_sgm), mode='eval')
-            epoch_eers.append(eer_)
-            total_loss_per_epoch = total_loss_per_epoch + running_loss_
-            val_bar.set_postfix(loss=running_loss_, eer=f"{100 * eer_:.2f}%")
-    mean_eer = np.round(np.mean(epoch_eers), configs.decimals)
-    return total_loss_per_epoch, mean_eer
+        for _, (anchor_sgm, positive_sgm, negative_sgm) in val_bar:
+            running_loss_, scores_g, scores_i = inner_ops((anchor_sgm, positive_sgm, negative_sgm), mode='eval')
+            losses.append(running_loss_)
+            epoch_genuine_scores.append(scores_g)
+            epoch_impostor_scores.append(scores_i)
+            val_bar.set_postfix(loss=f"{np.mean(losses):.4f}")
+    mean_loss = np.round(float(np.mean(losses)), configs.decimals)
+    mean_eer = compute_epoch_eer(np.concatenate(epoch_genuine_scores), np.concatenate(epoch_impostor_scores))
+    return mean_loss, mean_eer
 
 
 
-best_vloss = 1_000_000.
-best_eer_v = 100.
 best_eer_v = 100.
 best_epoch, new_best_epoch = 0, False
 

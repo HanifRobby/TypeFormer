@@ -17,7 +17,7 @@ configs.num_training_subjects = 30000
 configs.num_validation_subjects = 400
 configs.sequence_length = 50
 
-configs.batch_size_train = 64
+configs.batch_size_train = 1024
 configs.batch_size_val = 400
 configs.dimensionality = 5
 configs.output_dim = 64
