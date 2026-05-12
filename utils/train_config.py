@@ -24,6 +24,7 @@ configs.output_dim = 64
 configs.batches_per_epoch = 29
 configs.val_batches_per_epoch = 1
 configs.epochs = 1000
+configs.decimals = 4
 
 
 configs.K = 20  # number of Gaussian distributions

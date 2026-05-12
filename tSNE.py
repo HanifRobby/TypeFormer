@@ -15,7 +15,7 @@ for user in users_considered:
     for session in list(embeddings[user].keys()):
         user_embeddings.append(embeddings[user][session])
 user_embeddings = np.array(user_embeddings, dtype=float)
-embeddings_to_sne_transformed = TSNE(n_components=2, perplexity=14, init='pca', n_iter=1000).fit_transform(user_embeddings)
+embeddings_to_sne_transformed = TSNE(n_components=2, perplexity=14, init='pca', max_iter=1000).fit_transform(user_embeddings)
 
 
 fig = plt.figure(figsize=(12, 12))
@@ -34,4 +34,4 @@ for i in range(int(len(user_embeddings)/15)):
 ax.grid()
 ax.legend(loc = 'lower right', fontsize=fontsizelegend)
 ax.tick_params(axis='both', labelsize=fontsizeticks)
-plt.savefig('./results/analysis/tsne.pdf')
+plt.savefig('./results/analysis/tsne.png')

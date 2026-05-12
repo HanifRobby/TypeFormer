@@ -4,6 +4,9 @@ data/
 *.pdf
 *.npy
 *.json
+*.png
+*.txt
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -46,5 +46,5 @@ line_, = plt.plot(sp.stats.norm.ppf(fpr), sp.stats.norm.ppf(fnr), linewidth = 1.
 # plt.title('DET Curves', fontsize = fontsizetitle)
 # plt.axes().set_aspect('equal')
 plt.legend(loc='upper right', fontsize=fontsizelegend)# title = "Performance Comparison: EER [%]")
-plt.savefig('DET_curves.pdf')
+plt.savefig('./results/analysis/DET_curves.png')
 # plt.close()
