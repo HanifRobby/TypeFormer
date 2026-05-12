@@ -17,50 +17,74 @@ from model.Model import HARTrans
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
-os.makedirs(configs.base_dir, exist_ok=True)
-
-# Saving specific config file for reproducibility
-with open('utils/config.yaml') as f:
-    data = f.read()
-    f.close()
-with open(configs.base_dir + "experimental_config.txt", mode="w") as f:
-    f.write(data)
-    f.close()
-
-keystroke_dataset = list(np.load(configs.main_db, allow_pickle=True))
-
-ds_t = KeystrokeSessionTriplet(keystroke_dataset[configs.num_training_subjects:2*configs.num_training_subjects], data_length=configs.sequence_length, length=len(keystroke_dataset))
-ds_v = KeystrokeSessionTriplet(keystroke_dataset[:configs.num_validation_subjects], data_length=configs.sequence_length, length=len(keystroke_dataset))
-
 use_cuda = device.type == "cuda"
-num_workers = int(getattr(configs, "num_workers", 4))
 pin_memory = use_cuda
-dataloader_common_kwargs = {
-    "num_workers": num_workers,
-    "pin_memory": pin_memory,
-}
-if num_workers > 0:
-    dataloader_common_kwargs["persistent_workers"] = True
-    dataloader_common_kwargs["prefetch_factor"] = 2
 
-train_dataloader = DataLoader(
-    ds_t,
-    batch_size=configs.batch_size_train,
-    shuffle=True,
-    **dataloader_common_kwargs
-)
-val_dataloader = DataLoader(
-    ds_v,
-    batch_size=configs.batch_size_val,
-    shuffle=True,
-    **dataloader_common_kwargs
-)
+train_dataloader = None
+val_dataloader = None
+TransformerModel = None
+optimizer = None
+criterion = None
 
-TransformerModel = HARTrans(configs).float()
 
-optimizer = torch.optim.Adam(TransformerModel.parameters(), lr=0.001, betas=(0.9, 0.999))
-TransformerModel = TransformerModel.to(device)
-criterion = TripletLoss().to(device)
+def setup_training():
+    global train_dataloader, val_dataloader, TransformerModel, optimizer, criterion
+
+    os.makedirs(configs.base_dir, exist_ok=True)
+
+    # Saving specific config file for reproducibility
+    with open('utils/config.yaml') as f:
+        data = f.read()
+        f.close()
+    with open(configs.base_dir + "experimental_config.txt", mode="w") as f:
+        f.write(data)
+        f.close()
+
+    keystroke_dataset = list(np.load(configs.main_db, allow_pickle=True))
+    train_users = keystroke_dataset[configs.num_training_subjects:2 * configs.num_training_subjects]
+    val_users = keystroke_dataset[:configs.num_validation_subjects]
+    del keystroke_dataset
+
+    ds_t = KeystrokeSessionTriplet(
+        train_users,
+        data_length=configs.sequence_length,
+        length=max(configs.batch_size_train * configs.batches_per_epoch, 1),
+    )
+    ds_v = KeystrokeSessionTriplet(
+        val_users,
+        data_length=configs.sequence_length,
+        length=max(configs.batch_size_val * configs.val_batches_per_epoch, 1),
+    )
+
+    num_workers = int(getattr(configs, "num_workers", 4))
+    if os.name == "nt" and num_workers > 0:
+        print("Windows detected: overriding num_workers to 0 to avoid dataset duplication across workers.")
+        num_workers = 0
+
+    dataloader_common_kwargs = {
+        "num_workers": num_workers,
+        "pin_memory": pin_memory,
+    }
+    if num_workers > 0:
+        dataloader_common_kwargs["persistent_workers"] = True
+        dataloader_common_kwargs["prefetch_factor"] = 2
+
+    train_dataloader = DataLoader(
+        ds_t,
+        batch_size=configs.batch_size_train,
+        shuffle=True,
+        **dataloader_common_kwargs
+    )
+    val_dataloader = DataLoader(
+        ds_v,
+        batch_size=configs.batch_size_val,
+        shuffle=True,
+        **dataloader_common_kwargs
+    )
+
+    TransformerModel = HARTrans(configs).float().to(device)
+    optimizer = torch.optim.Adam(TransformerModel.parameters(), lr=configs.lr, betas=configs.betas)
+    criterion = TripletLoss().to(device)
 
 
 def inner_ops(input_, mode='train'):
@@ -147,6 +171,8 @@ def eval_one_epoch(epoch):
 
 
 def run_training():
+    setup_training()
+
     best_eer_v = 100.
     best_epoch, new_best_epoch = 0, False
 

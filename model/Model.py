@@ -132,11 +132,12 @@ class Gaussian_Position(nn.Module):
         # self.register_buffer('pe', self.embedding)
         self.embedding = nn.Parameter(torch.zeros([K, d_model], dtype=torch.float), requires_grad=True)
         nn.init.xavier_uniform_(self.embedding, gain=1)
-        self.positions = torch.tensor([i for i in range(total_size)], requires_grad=False).unsqueeze(1).repeat(1, K).to(device)
+        positions = torch.arange(total_size, dtype=torch.float).unsqueeze(1).repeat(1, K)
+        self.register_buffer("positions", positions, persistent=False)
         interval = total_size / K
         mu_init = torch.arange(0, K, dtype=torch.float) * interval
         self.mu = nn.Parameter(mu_init.unsqueeze(0), requires_grad=True)
-        self.sigma = nn.Parameter(torch.full((1, K, 1), 50.0, dtype=torch.float), requires_grad=True)
+        self.sigma = nn.Parameter(torch.full((1, K), 50.0, dtype=torch.float), requires_grad=True)
 
     def forward(self, x):
         M = normal_pdf(self.positions, self.mu, self.sigma)

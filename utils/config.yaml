@@ -29,7 +29,7 @@ train:
   model_name: "TypeFormer_pretrained"
   lr: 0.001
   betas: [0.9, 0.999]
-  batch_size_train: 1024
+  batch_size_train: 64
   batch_size_val: 400
   batches_per_epoch: 29
   val_batches_per_epoch: 1

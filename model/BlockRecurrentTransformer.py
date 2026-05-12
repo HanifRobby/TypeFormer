@@ -124,7 +124,7 @@ class Attention(nn.Module):
         kv_input = default(context, x)
 
         q = self.to_q(x)
-        k, v = self.to_kv(kv_input.type(torch.float64)).chunk(2, dim=-1)
+        k, v = self.to_kv(kv_input).chunk(2, dim=-1)
 
         # split heads
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), (q, k, v))
