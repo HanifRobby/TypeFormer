@@ -2,7 +2,7 @@ import ast
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils.train_config import configs
+from utils.config import configs
 
 
 starting_epoch = 0

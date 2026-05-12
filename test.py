@@ -2,8 +2,7 @@ import torch
 import numpy as np
 from utils.misc import KeystrokeSessionTriplet, compute_eer
 import os
-from utils.train_config import configs
-from utils.test_config import test_configs
+from utils.config import configs, test_configs
 from model.Model import HARTrans
 from sklearn.metrics.pairwise import euclidean_distances
 

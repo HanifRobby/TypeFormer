@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from sklearn.metrics import det_curve
-from utils.test_config import test_configs
+from utils.config import test_configs
 
 genuine_distances = np.load(test_configs.results_dir + 'genuine_distances_{}.npy'.format(test_configs.enrolment_samples), allow_pickle=True)
 impostor_distances = np.load(test_configs.results_dir + 'impostor_distances_{}.npy'.format(test_configs.enrolment_samples), allow_pickle=True)

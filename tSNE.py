@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 
-from utils.test_config import test_configs
+from utils.config import test_configs
 
 plt.gca().set_aspect('equal', adjustable='box')
 

@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils.misc import KeystrokeSessionTriplet
-from utils.train_config import configs
+from utils.config import configs
 from utils.misc import compute_eer, TripletLoss
 
 import time
@@ -19,7 +19,7 @@ print("Device:", device)
 os.makedirs(configs.base_dir, exist_ok=True)
 
 # Saving specific config file for reproducibility
-with open('utils/train_config.py') as f:
+with open('utils/config.yaml') as f:
     data = f.read()
     f.close()
 with open(configs.base_dir + "experimental_config.txt", mode="w") as f:
