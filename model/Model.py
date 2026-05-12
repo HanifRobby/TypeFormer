@@ -228,7 +228,7 @@ class EncoderLayer_BlockRecTransf(nn.Module):
     def forward(self, x, mask=None):
         "Follow Figure 1 (left) for connections."
         # x = self.sublayer[0](x, lambda x: self.self_attn(x, x, mask))
-        block_rec_att, block_rec_att_state =  self.self_attn(x, x, mask)
+        block_rec_att, block_rec_att_state = self.self_attn(x, mask=mask)
         x = self.sublayer[0](x, lambda x:block_rec_att)
         return self.sublayer[1](x, self.feed_forward)
 

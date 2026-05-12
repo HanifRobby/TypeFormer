@@ -119,7 +119,7 @@ class Attention(nn.Module):
         # b, device, h, scale = x.shape[0], x.device, self.heads, self.scale
         mask = None
         b, h, scale = x.shape[0], self.heads, self.scale
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = x.device
         x = self.norm(x)
         kv_input = default(context, x)
 
@@ -230,10 +230,11 @@ class BlockRecurrentAttention(nn.Module):
     ) -> Tuple[SeqTensor, StateTensor]:
         # batch, seq_len, device = x.shape[0], x.shape[-2], x.device
         batch, seq_len = x.shape[0], x.shape[-2]
-
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        if exists(state):
-            state = torch.zeros((batch, self.state_len, self.dim_state), device=device)
+        device = x.device
+        if not exists(state):
+            state = torch.zeros((batch, self.state_len, self.dim_state), device=device, dtype=x.dtype)
+        else:
+            state = state.to(device=device, dtype=x.dtype)
         self_attn_pos_emb = self.rotary_pos_emb(seq_len, device=device)
         state_pos_emb = self.rotary_pos_emb(self.state_len, device=device)
         input_attn = self.input_self_attn(x, mask=mask, pos_emb=self_attn_pos_emb)
