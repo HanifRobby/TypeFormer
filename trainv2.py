@@ -1,4 +1,5 @@
 import os
+from multiprocessing import freeze_support
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -145,37 +146,41 @@ def eval_one_epoch(epoch):
 
 
 
-best_eer_v = 100.
-best_epoch, new_best_epoch = 0, False
+def run_training():
+    best_eer_v = 100.
+    best_epoch, new_best_epoch = 0, False
 
-loss_t_list, eer_t_list = [], []
-loss_v_list, eer_v_list = [], []
+    loss_t_list, eer_t_list = [], []
+    loss_v_list, eer_v_list = [], []
+
+    for epoch in range(configs.epochs):
+        start = time.time()
+
+        loss_t, eer_t = train_one_epoch(epoch)
+        loss_t_list.append(loss_t)
+        eer_t_list.append(eer_t)
+
+        loss_v, eer_v = eval_one_epoch(epoch)
+        loss_v_list.append(loss_v)
+        eer_v_list.append(eer_v)
+
+        end = time.time()
+        if eer_v_list[-1] < best_eer_v:
+            new_best_epoch, best_eer_v, best_epoch = True, eer_v_list[-1], epoch
+            torch.save(TransformerModel.state_dict(), configs.model_filename)
+        else:
+            new_best_epoch = False
+        print('Epoch: %d. Training set: Loss: %.2f, EER [%%]: %.2f%%. Validation set: Loss: %.2f, EER [%%]: %.2f%%. '
+              'Time for last epoch [min]: %.2f. New best EER on val set: %.d'
+              % (epoch, loss_t_list[-1], 100*eer_t_list[-1], loss_v_list[-1], 100*eer_v_list[-1],
+                 np.round((end-start)/60, configs.decimals), new_best_epoch))
+        log_list = [loss_t_list, loss_v_list, eer_t_list, eer_v_list]
+        with open(configs.log_filename, "w") as output:
+            output.write(str(log_list))
+
+    print('\nBest Validation EER: %.2f%%, in epoch: %.d' % (best_eer_v, best_epoch))
 
 
-for epoch in range(configs.epochs):
-    start = time.time()
-
-
-    loss_t, eer_t = train_one_epoch(epoch)
-    loss_t_list.append(loss_t)
-    eer_t_list.append(eer_t)
-
-    loss_v, eer_v = eval_one_epoch(epoch)
-    loss_v_list.append(loss_v)
-    eer_v_list.append(eer_v)
-
-    end = time.time()
-    if eer_v_list[-1] < best_eer_v:
-        new_best_epoch, best_eer_v, best_epoch = True, eer_v_list[-1], epoch
-        torch.save(TransformerModel.state_dict(), configs.model_filename)
-    else:
-        new_best_epoch = False
-    print('Epoch: %d. Training set: Loss: %.2f, EER [%%]: %.2f%%. Validation set: Loss: %.2f, EER [%%]: %.2f%%. '
-          'Time for last epoch [min]: %.2f. New best EER on val set: %.d'
-          % (epoch, loss_t_list[-1], 100*eer_t_list[-1], loss_v_list[-1], 100*eer_v_list[-1],
-             np.round((end-start)/60, configs.decimals), new_best_epoch))
-    log_list = [loss_t_list, loss_v_list, eer_t_list, eer_v_list]
-    with open(configs.log_filename, "w") as output:
-        output.write(str(log_list))
-
-print('\nBest Validation EER: %.2f%%, in epoch: %.d' % (best_eer_v, best_epoch))
+if __name__ == "__main__":
+    freeze_support()
+    run_training()
