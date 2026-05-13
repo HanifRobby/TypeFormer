@@ -1,4 +1,5 @@
 import os
+import json
 from multiprocessing import freeze_support
 import numpy as np
 import torch
@@ -9,6 +10,7 @@ from utils.config import configs
 from utils.misc import compute_eer, TripletLoss
 
 import time
+from datetime import datetime, timezone
 
 
 from model.Model import HARTrans
@@ -31,6 +33,9 @@ def setup_training():
     global train_dataloader, val_dataloader, TransformerModel, optimizer, criterion
 
     os.makedirs(configs.base_dir, exist_ok=True)
+    os.makedirs(configs.bucket_root_dir, exist_ok=True)
+    with open(configs.latest_run_file, "w", encoding="utf-8") as latest_file:
+        latest_file.write(configs.run_id)
 
     # Saving specific config file for reproducibility
     with open('utils/config.yaml') as f:
@@ -39,6 +44,23 @@ def setup_training():
     with open(configs.base_dir + "experimental_config.txt", mode="w") as f:
         f.write(data)
         f.close()
+    run_metadata = {
+        "run_id": configs.run_id,
+        "output_bucket": configs.output_bucket,
+        "script": "trainv2.py",
+        "started_at_utc": datetime.now(timezone.utc).isoformat(),
+        "device": str(device),
+        "model_filename": configs.model_filename,
+        "log_filename": configs.log_filename,
+        "dataset": configs.main_db,
+        "batch_size_train": configs.batch_size_train,
+        "batch_size_val": configs.batch_size_val,
+        "batches_per_epoch": configs.batches_per_epoch,
+        "val_batches_per_epoch": configs.val_batches_per_epoch,
+        "epochs": configs.epochs,
+    }
+    with open(configs.run_metadata_filename, "w", encoding="utf-8") as metadata_file:
+        json.dump(run_metadata, metadata_file, indent=2)
 
     keystroke_dataset = list(np.load(configs.main_db, allow_pickle=True))
     train_users = keystroke_dataset[configs.num_training_subjects:2 * configs.num_training_subjects]
@@ -203,6 +225,21 @@ def run_training():
         log_list = [loss_t_list, loss_v_list, eer_t_list, eer_v_list]
         with open(configs.log_filename, "w") as output:
             output.write(str(log_list))
+
+    run_metadata = {}
+    if os.path.exists(configs.run_metadata_filename):
+        with open(configs.run_metadata_filename, "r", encoding="utf-8") as metadata_file:
+            run_metadata = json.load(metadata_file)
+    run_metadata.update({
+        "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+        "best_validation_eer": float(best_eer_v),
+        "best_epoch": int(best_epoch),
+        "model_filename": configs.model_filename,
+        "log_filename": configs.log_filename,
+        "dataset": configs.main_db,
+    })
+    with open(configs.run_metadata_filename, "w", encoding="utf-8") as metadata_file:
+        json.dump(run_metadata, metadata_file, indent=2)
 
     print('\nBest Validation EER: %.2f%%, in epoch: %.d' % (best_eer_v, best_epoch))
 

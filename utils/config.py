@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -5,6 +7,11 @@ import yaml
 
 
 CONFIG_PATH = Path(__file__).with_name("config.yaml")
+LATEST_RUN_FILENAME = "_latest_run.txt"
+
+
+def _as_dir_str(path: Path) -> str:
+    return str(path) + os.sep
 
 
 def _load_config():
@@ -14,10 +21,23 @@ def _load_config():
 
 def _resolve_bucket_dir(paths_cfg, bucket):
     if bucket == "latest_experiment":
-        return paths_cfg["latest_experiment_dir"]
+        return Path(paths_cfg["latest_experiment_dir"])
     if bucket == "baseline":
-        return paths_cfg["baseline_dir"]
+        return Path(paths_cfg["baseline_dir"])
     raise ValueError(f"Unsupported output bucket: {bucket}")
+
+
+def _resolve_run_id(run_id_value, bucket_root: Path):
+    if run_id_value == "auto":
+        return f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    if run_id_value == "latest":
+        latest_file = bucket_root / LATEST_RUN_FILENAME
+        if not latest_file.exists():
+            raise FileNotFoundError(
+                f"Cannot resolve run_id='latest' because pointer file does not exist: {latest_file}"
+            )
+        return latest_file.read_text(encoding="utf-8").strip()
+    return run_id_value
 
 
 def _build_train_configs(raw):
@@ -29,22 +49,28 @@ def _build_train_configs(raw):
 
     model_name = train_cfg["model_name"]
     output_bucket = train_cfg["output_bucket"]
-    base_dir = _resolve_bucket_dir(paths_cfg, output_bucket)
+    bucket_root = _resolve_bucket_dir(paths_cfg, output_bucket)
+    run_id = _resolve_run_id(train_cfg.get("run_id", "auto"), bucket_root)
+    base_dir = bucket_root / run_id
 
     return SimpleNamespace(
         model_name=model_name,
         output_bucket=output_bucket,
-        base_dir=base_dir,
-        model_dir=base_dir,
-        log_dir=base_dir,
+        run_id=run_id,
+        bucket_root_dir=_as_dir_str(bucket_root),
+        base_dir=_as_dir_str(base_dir),
+        model_dir=_as_dir_str(base_dir),
+        log_dir=_as_dir_str(base_dir),
         data_dir=paths_cfg["data_dir"],
         pretrained_dir=paths_cfg["pretrained_dir"],
         results_dir=paths_cfg["results_dir"],
         analysis_dir=paths_cfg["analysis_dir"],
         latest_experiment_dir=paths_cfg["latest_experiment_dir"],
         baseline_dir=paths_cfg["baseline_dir"],
-        log_filename=f"{base_dir}{model_name}_log.txt",
-        model_filename=f"{base_dir}{model_name}.pt",
+        latest_run_file=str(bucket_root / LATEST_RUN_FILENAME),
+        log_filename=str(base_dir / f"{model_name}_log.txt"),
+        model_filename=str(base_dir / f"{model_name}.pt"),
+        run_metadata_filename=str(base_dir / "run_metadata.json"),
         main_db=dataset_cfg["main_db"],
         total_users=split_cfg["train_end"],
         num_training_subjects=split_cfg["train_start"],
@@ -75,22 +101,26 @@ def _build_test_configs(raw, train_configs):
     test_cfg = raw["test"]
     split_cfg = raw["dataset"]["split"]
     paths_cfg = raw["paths"]
+
     output_bucket = test_cfg["output_bucket"]
-    results_dir = _resolve_bucket_dir(paths_cfg, output_bucket)
+    bucket_root = _resolve_bucket_dir(paths_cfg, output_bucket)
+    run_id = _resolve_run_id(test_cfg.get("run_id", "latest"), bucket_root)
+    results_dir = bucket_root / run_id
     checkpoint_path = test_cfg.get("checkpoint_path", "")
-    if checkpoint_path:
-        model_filename = checkpoint_path
-    else:
-        model_filename = train_configs.model_filename
+    model_filename = checkpoint_path if checkpoint_path else str(results_dir / f"{train_configs.model_name}.pt")
 
     return SimpleNamespace(
         db=test_cfg["db"],
         output_bucket=output_bucket,
+        run_id=run_id,
+        bucket_root_dir=_as_dir_str(bucket_root),
         db_filename=train_configs.main_db,
         model_name=train_configs.model_name,
-        results_dir=results_dir,
+        results_dir=_as_dir_str(results_dir),
         model_filename=model_filename,
-        analysis_dir=paths_cfg["analysis_dir"],
+        analysis_dir=_as_dir_str(Path(paths_cfg["analysis_dir"]) / run_id),
+        latest_run_file=str(bucket_root / LATEST_RUN_FILENAME),
+        run_metadata_filename=str(results_dir / "evaluation_metadata.json"),
         num_test_subjects=split_cfg["test_end"] - split_cfg["test_start"],
         num_validation_subjects=split_cfg["val_end"],
         total_num_sessions=test_cfg["total_num_sessions"],

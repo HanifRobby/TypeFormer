@@ -1,13 +1,33 @@
 import ast
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 from utils.config import configs
 
 
 starting_epoch = 0
 
-with open(configs.log_filename, 'r') as f:
+log_path = Path(configs.log_filename)
+if not log_path.exists():
+    latest_run_file = Path(configs.latest_run_file)
+    if latest_run_file.exists():
+        latest_run_id = latest_run_file.read_text(encoding="utf-8").strip()
+        candidate = Path(configs.bucket_root_dir) / latest_run_id / f"{configs.model_name}_log.txt"
+        if candidate.exists():
+            log_path = candidate
+if not log_path.exists():
+    bucket_logs = sorted(
+        Path(configs.bucket_root_dir).glob("*/*_log.txt"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
+    if bucket_logs:
+        log_path = bucket_logs[0]
+if not log_path.exists():
+    raise FileNotFoundError(f"Training log not found in {configs.bucket_root_dir}")
+
+with open(log_path, 'r') as f:
     res = ast.literal_eval(f.read())
 
 num_epochs = len(res[0])

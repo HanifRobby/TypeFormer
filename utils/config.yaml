@@ -30,6 +30,7 @@ model:
 
 train:
   output_bucket: "latest_experiment"
+  run_id: "auto"
   model_name: "TypeFormer"
   lr: 0.001
   betas: [0.9, 0.999]
@@ -43,8 +44,9 @@ train:
 
 test:
   db: "Aalto_mobile"
-  output_bucket: "latest_experiment"
-  checkpoint_path: ""
+  output_bucket: "baseline"
+  run_id: "baseline_pretrained"
+  checkpoint_path: "pretrained/TypeFormer_pretrained.pt"
   total_num_sessions: 15
   enrolment_samples: 5
   test_samples: 5

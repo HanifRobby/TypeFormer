@@ -1,7 +1,9 @@
 import torch
 import numpy as np
+import json
 from utils.misc import KeystrokeSessionTriplet, compute_eer
 import os
+from datetime import datetime, timezone
 from utils.config import configs, test_configs
 from model.Model import HARTrans
 from sklearn.metrics.pairwise import euclidean_distances
@@ -9,7 +11,10 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+os.makedirs(test_configs.bucket_root_dir, exist_ok=True)
 os.makedirs(test_configs.results_dir, exist_ok=True)
+with open(test_configs.latest_run_file, "w", encoding="utf-8") as latest_file:
+    latest_file.write(test_configs.run_id)
 
 
 TransformerModel = HARTrans(configs).double()
@@ -78,3 +83,18 @@ for user in range(test_configs.num_test_subjects):
     eers_per_user.append(eer)
 mean_eer_per_user = np.mean(eers_per_user)
 print("Mean Per-Subject EER (%):", mean_eer_per_user)
+
+evaluation_metadata = {
+    "run_id": test_configs.run_id,
+    "output_bucket": test_configs.output_bucket,
+    "script": "test.py",
+    "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    "device": str(device),
+    "checkpoint": test_configs.model_filename,
+    "dataset": test_configs.db_filename,
+    "global_eer_percent": float(eer),
+    "mean_per_subject_eer_percent": float(mean_eer_per_user),
+    "results_dir": test_configs.results_dir,
+}
+with open(test_configs.run_metadata_filename, "w", encoding="utf-8") as metadata_file:
+    json.dump(evaluation_metadata, metadata_file, indent=2)
