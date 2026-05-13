@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from sklearn.manifold import TSNE
 
 from utils.config import test_configs
@@ -34,4 +35,5 @@ for i in range(int(len(user_embeddings)/15)):
 ax.grid()
 ax.legend(loc = 'lower right', fontsize=fontsizelegend)
 ax.tick_params(axis='both', labelsize=fontsizeticks)
-plt.savefig('./results/analysis/tsne.png')
+os.makedirs(test_configs.analysis_dir, exist_ok=True)
+plt.savefig(test_configs.analysis_dir + 'tsne.png')

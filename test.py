@@ -16,7 +16,7 @@ TransformerModel = HARTrans(configs).double()
 
 keystroke_dataset = list(np.load(test_configs.db_filename, allow_pickle=True))
 
-TransformerModel.load_state_dict(torch.load(configs.model_filename, map_location=device))
+TransformerModel.load_state_dict(torch.load(test_configs.model_filename, map_location=device))
 TransformerModel.eval()
 
 ds_e = KeystrokeSessionTriplet(keystroke_dataset[test_configs.num_validation_subjects:test_configs.num_validation_subjects+test_configs.num_test_subjects], length=test_configs.num_test_subjects, db=test_configs.db)

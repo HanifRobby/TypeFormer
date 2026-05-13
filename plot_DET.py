@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+import os
 from sklearn.metrics import det_curve
 from utils.config import test_configs
 
@@ -46,5 +47,6 @@ line_, = plt.plot(sp.stats.norm.ppf(fpr), sp.stats.norm.ppf(fnr), linewidth = 1.
 # plt.title('DET Curves', fontsize = fontsizetitle)
 # plt.axes().set_aspect('equal')
 plt.legend(loc='upper right', fontsize=fontsizelegend)# title = "Performance Comparison: EER [%]")
-plt.savefig('./results/analysis/DET_curves.png')
+os.makedirs(test_configs.analysis_dir, exist_ok=True)
+plt.savefig(test_configs.analysis_dir + 'DET_curves.png')
 # plt.close()

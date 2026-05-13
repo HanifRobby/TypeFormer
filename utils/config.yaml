@@ -1,7 +1,10 @@
 paths:
-  base_dir: "pretrained/"
+  pretrained_dir: "pretrained/"
   data_dir: "data/"
   results_dir: "results/"
+  analysis_dir: "results/analysis/"
+  latest_experiment_dir: "results/latest_experiment/"
+  baseline_dir: "results/baseline/"
 
 dataset:
   main_db: "./data/preprocessed/keystroke_all_list.npy"
@@ -26,7 +29,8 @@ model:
   vheads: 5
 
 train:
-  model_name: "TypeFormer_pretrained"
+  output_bucket: "latest_experiment"
+  model_name: "TypeFormer"
   lr: 0.001
   betas: [0.9, 0.999]
   batch_size_train: 1024
@@ -39,6 +43,8 @@ train:
 
 test:
   db: "Aalto_mobile"
+  output_bucket: "latest_experiment"
+  checkpoint_path: ""
   total_num_sessions: 15
   enrolment_samples: 5
   test_samples: 5
