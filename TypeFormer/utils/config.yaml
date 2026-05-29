@@ -1,0 +1,53 @@
+paths:
+  pretrained_dir: "pretrained/"
+  data_dir: "data/"
+  results_dir: "results/"
+  analysis_dir: "results/analysis/"
+  latest_experiment_dir: "results/latest_experiment/"
+  baseline_dir: "results/baseline/"
+
+dataset:
+  main_db: "./data/preprocessed/keystroke_all_list.npy"
+  split:
+    val_start: 0
+    val_end: 400
+    test_start: 400
+    test_end: 1400
+    train_start: 30000
+    train_end: 60000
+
+model:
+  sequence_length: 50
+  dimensionality: 5
+  output_dim: 64
+  K: 20
+  hlayers: 9
+  hlayers_rec: 2
+  hlayers_pos: 1
+  hheads: 10
+  vlayers: 1
+  vheads: 5
+
+train:
+  output_bucket: "latest_experiment"
+  run_id: "auto"
+  model_name: "TypeFormer"
+  lr: 0.001
+  betas: [0.9, 0.999]
+  batch_size_train: 1024
+  batch_size_val: 400
+  batches_per_epoch: 29
+  val_batches_per_epoch: 1
+  epochs: 1000
+  decimals: 4
+  num_workers: 4
+
+test:
+  db: "Aalto_mobile"
+  output_bucket: "baseline"
+  run_id: "baseline_pretrained"
+  checkpoint_path: "pretrained/TypeFormer_pretrained.pt"
+  total_num_sessions: 15
+  enrolment_samples: 5
+  test_samples: 5
+  impostor_test_samples: 1

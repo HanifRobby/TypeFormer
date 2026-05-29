@@ -1,0 +1,100 @@
+import torch
+import numpy as np
+import json
+from utils.misc import KeystrokeSessionTriplet, compute_eer
+import os
+from datetime import datetime, timezone
+from utils.config import configs, test_configs
+from model.Model import HARTrans
+from sklearn.metrics.pairwise import euclidean_distances
+
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+os.makedirs(test_configs.bucket_root_dir, exist_ok=True)
+os.makedirs(test_configs.results_dir, exist_ok=True)
+with open(test_configs.latest_run_file, "w", encoding="utf-8") as latest_file:
+    latest_file.write(test_configs.run_id)
+
+
+TransformerModel = HARTrans(configs).double()
+
+keystroke_dataset = list(np.load(test_configs.db_filename, allow_pickle=True))
+
+TransformerModel.load_state_dict(torch.load(test_configs.model_filename, map_location=device))
+TransformerModel.eval()
+
+ds_e = KeystrokeSessionTriplet(keystroke_dataset[test_configs.num_validation_subjects:test_configs.num_validation_subjects+test_configs.num_test_subjects], length=test_configs.num_test_subjects, db=test_configs.db)
+
+
+TransformerModel = TransformerModel.to(device)
+
+
+embeddings = {}
+with torch.no_grad():
+    for user in range(len(ds_e)):
+        embeddings[str(user)] = {}
+        print("Computing embeddings for user " + str(user))
+        for enrolment_session in range(test_configs.total_num_sessions):
+            session_data = ds_e.Dataset[user][enrolment_session]
+            input_data = torch.from_numpy(
+                np.reshape(session_data, (1, configs.sequence_length, configs.dimensionality)).astype(np.float64)
+            ).double().to(device)
+            embedding = TransformerModel(input_data)
+            embeddings[str(user)][str(enrolment_session)] = np.ravel(embedding.cpu().numpy())
+
+np.save(test_configs.results_dir + "test_embeddings_all_users.npy", embeddings)
+embeddings = np.load(test_configs.results_dir + "test_embeddings_all_users.npy", allow_pickle=True).item()
+#
+genuine_distances = []
+impostor_distances = []
+for user in list(embeddings.keys()):
+    enrolment_embs = list(embeddings[user].values())[:test_configs.enrolment_samples]
+    test_embs = list(embeddings[user].values())[-test_configs.test_samples:]
+    genuine_distances.append([np.mean(euclidean_distances(enrolment_embs, test_embs), axis = 0)])
+    print("Testing user " + str(user))
+    for impostor_user in [x for x in list(embeddings.keys()) if x != user]:
+        impostor_test_embs = list(embeddings[impostor_user].values())[-test_configs.impostor_test_samples:]
+        impostor_distances.append([np.mean(euclidean_distances(enrolment_embs, impostor_test_embs), axis=0)])
+
+np.save(test_configs.results_dir + 'genuine_distances_{}.npy'.format(test_configs.enrolment_samples), np.array(genuine_distances, dtype = float))
+np.save(test_configs.results_dir + 'impostor_distances_{}.npy'.format(test_configs.enrolment_samples), np.array(impostor_distances, dtype = float))
+
+genuine_distances = np.ravel(np.load(test_configs.results_dir + 'genuine_distances_{}.npy'.format(test_configs.enrolment_samples), allow_pickle=True))
+impostor_distances = np.ravel(np.load(test_configs.results_dir + 'impostor_distances_{}.npy'.format(test_configs.enrolment_samples), allow_pickle=True))
+
+labels = np.array([0 for x in genuine_distances] + [1 for x in impostor_distances])
+scores = np.concatenate((genuine_distances, impostor_distances))
+eer = np.round(100*compute_eer(labels, scores)[0], 2)
+print("Global EER (%):", eer)
+
+eers_per_user = []
+for user in range(test_configs.num_test_subjects):
+    genuine_start = user * test_configs.test_samples
+    genuine_end = test_configs.test_samples * (user + 1)
+    impostor_span = (test_configs.num_test_subjects - 1) * test_configs.impostor_test_samples
+    impostor_start = user * impostor_span
+    impostor_end = (user + 1) * impostor_span
+    user_genuine = np.ravel(genuine_distances[genuine_start:genuine_end])
+    user_impostor = np.ravel(impostor_distances[impostor_start:impostor_end])
+    scores = np.concatenate((user_genuine, user_impostor))
+    labels = np.array([0 for x in user_genuine] + [1 for x in user_impostor])
+    eer = np.round(100*compute_eer(labels, scores)[0], 2)
+    eers_per_user.append(eer)
+mean_eer_per_user = np.mean(eers_per_user)
+print("Mean Per-Subject EER (%):", mean_eer_per_user)
+
+evaluation_metadata = {
+    "run_id": test_configs.run_id,
+    "output_bucket": test_configs.output_bucket,
+    "script": "test.py",
+    "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    "device": str(device),
+    "checkpoint": test_configs.model_filename,
+    "dataset": test_configs.db_filename,
+    "global_eer_percent": float(eer),
+    "mean_per_subject_eer_percent": float(mean_eer_per_user),
+    "results_dir": test_configs.results_dir,
+}
+with open(test_configs.run_metadata_filename, "w", encoding="utf-8") as metadata_file:
+    json.dump(evaluation_metadata, metadata_file, indent=2)
