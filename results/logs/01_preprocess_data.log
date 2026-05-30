@@ -1,0 +1,16 @@
+2026-05-30 17:12:03 | 01_preprocess_data | INFO | Loading raw dataset from D:\Clean Code\TypeFormer ASNorm FiLM\data\preprocessed\keystroke_all_list.npy ...
+2026-05-30 17:12:27 | 01_preprocess_data | INFO | Total users in raw dataset: 64358
+2026-05-30 17:12:27 | 01_preprocess_data | INFO | --- Processing split: val (indices 0–399) ---
+2026-05-30 17:12:27 | 01_preprocess_data | INFO | val: 400 users OK, 0 skipped.
+2026-05-30 17:12:27 | 01_preprocess_data | INFO | Saved val  shape=(400, 15, 50, 5)  → D:\Clean Code\TypeFormer ASNorm FiLM\data\processed\val_sessions.npz
+2026-05-30 17:12:27 | 01_preprocess_data | INFO | --- Processing split: test (indices 400–1399) ---
+2026-05-30 17:12:28 | 01_preprocess_data | INFO | test: 1000 users OK, 0 skipped.
+2026-05-30 17:12:28 | 01_preprocess_data | INFO | Saved test  shape=(1000, 15, 50, 5)  → D:\Clean Code\TypeFormer ASNorm FiLM\data\processed\test_sessions.npz
+2026-05-30 17:12:28 | 01_preprocess_data | INFO | --- Processing split: train (indices 30000–59999) ---
+2026-05-30 17:12:35 | 01_preprocess_data | INFO | train: 30000 users OK, 0 skipped.
+2026-05-30 17:12:50 | 01_preprocess_data | INFO | Saved train  shape=(30000, 15, 50, 5)  → D:\Clean Code\TypeFormer ASNorm FiLM\data\processed\train_sessions.npz
+2026-05-30 17:12:50 | 01_preprocess_data | INFO | --- Processing split: cohort_pool (indices 1400–29999) ---
+2026-05-30 17:12:52 | 01_preprocess_data | INFO | cohort_pool: 28600 users OK, 0 skipped.
+2026-05-30 17:13:07 | 01_preprocess_data | INFO | Saved cohort_pool  shape=(28600, 15, 50, 5)  → D:\Clean Code\TypeFormer ASNorm FiLM\data\processed\cohort_pool_sessions.npz
+2026-05-30 17:13:07 | 01_preprocess_data | INFO | Metadata saved to D:\Clean Code\TypeFormer ASNorm FiLM\data\processed\preprocessing_metadata.json
+2026-05-30 17:13:07 | 01_preprocess_data | INFO | Preprocessing complete.

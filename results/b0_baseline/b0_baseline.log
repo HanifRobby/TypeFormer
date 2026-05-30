@@ -1,0 +1,9 @@
+2026-05-30 17:14:17 | b0_baseline | INFO | === B0 Baseline: TypeFormer paper-faithful Euclidean distance ===
+2026-05-30 17:14:17 | b0_baseline | INFO | Test users: 1000  sessions: 15
+2026-05-30 17:14:26 | b0_baseline | INFO | Embeddings shape: (1000, 15, 64)
+2026-05-30 17:14:26 | b0_baseline | INFO | --- E=5 ---
+2026-05-30 17:14:34 | b0_baseline | INFO | E=5  mean_per_subject_EER=3.20%  std=5.23%
+2026-05-30 17:17:18 | b0_baseline | INFO | E=5  global_EER=6.28%  95%CI=[5.91%, 6.72%]
+2026-05-30 17:17:18 | b0_baseline | INFO | SANITY CHECK PASSED: E=5 per-subject EER=3.20% (expected ~3.25%)
+2026-05-30 17:17:18 | b0_baseline | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\b0_baseline
+2026-05-30 17:17:18 | b0_baseline | INFO | === B0 complete ===

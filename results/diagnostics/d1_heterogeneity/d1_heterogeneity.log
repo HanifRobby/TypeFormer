@@ -1,0 +1,8 @@
+2026-05-30 17:18:25 | d1_heterogeneity | INFO | === Diagnostic D1: Heterogenitas sigma_u ===
+2026-05-30 17:18:25 | d1_heterogeneity | INFO | Using 100 validation users (E=5)
+2026-05-30 17:18:29 | d1_heterogeneity | INFO | Cohort embeddings: (500, 64)
+2026-05-30 17:18:29 | d1_heterogeneity | INFO | sigma_u: mean=0.0745  std=0.0085  min=0.0416  max=0.0962  ratio=2.31
+2026-05-30 17:18:29 | d1_heterogeneity | INFO | Decision (ratio > 2.0): AS-Norm VIABLE
+2026-05-30 17:18:30 | d1_heterogeneity | INFO | Histogram saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\diagnostics\d1_heterogeneity\sigma_u_histogram.png
+2026-05-30 17:18:30 | d1_heterogeneity | INFO | === D1 complete ===
+2026-05-30 17:18:30 | d1_heterogeneity | INFO | DECISION: AS-Norm VIABLE

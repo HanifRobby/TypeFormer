@@ -1,0 +1,14 @@
+{
+  "experiment_id": "d3_baseline_global",
+  "timestamp": "2026-05-30T10:22:01.576850+00:00",
+  "results": {
+    "E_5": {
+      "E": 5,
+      "mean_per_subject_eer": 0.03203163163163163,
+      "std_per_subject_eer": 0.05227261155952116,
+      "global_eer": 0.0628119119119119,
+      "global_eer_ci_lower": 0.059085548048048074,
+      "global_eer_ci_upper": 0.06720151401401403
+    }
+  }
+}

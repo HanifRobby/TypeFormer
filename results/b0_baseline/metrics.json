@@ -1,0 +1,21 @@
+{
+  "experiment_id": "b0_baseline",
+  "timestamp": "2026-05-30T10:17:18.457530+00:00",
+  "scoring": {
+    "method": "euclidean",
+    "template": "mean_pairwise",
+    "K": 100,
+    "epsilon": 0.001
+  },
+  "results": {
+    "E_5": {
+      "E": 5,
+      "mean_per_subject_eer": 0.03203163163163163,
+      "std_per_subject_eer": 0.05227261155952116,
+      "global_eer": 0.0628119119119119,
+      "global_eer_ci_lower": 0.059085548048048074,
+      "global_eer_ci_upper": 0.06720151401401403,
+      "n_users": 1000
+    }
+  }
+}

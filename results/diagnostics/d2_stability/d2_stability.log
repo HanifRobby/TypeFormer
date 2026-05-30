@@ -1,0 +1,8 @@
+2026-05-30 17:19:00 | d2_stability | INFO | === Diagnostic D2: Stabilitas s_u ===
+2026-05-30 17:19:01 | d2_stability | INFO | Using 100 validation users (E_low=5, E_high=15)
+2026-05-30 17:19:01 | d2_stability | INFO | Pearson correlation (E=5 vs E=15): mean=0.924  std=0.057
+2026-05-30 17:19:01 | d2_stability | INFO | Per-dimension correlations: [0.996 0.951 0.951 0.957 0.773 0.899 0.921 0.905 0.995 0.862 0.861 0.961
+ 0.995 0.871 0.871 0.894 0.995 0.961 0.959 0.908]
+2026-05-30 17:19:01 | d2_stability | INFO | Decision: FiLM VIABLE without shrinkage (mean_corr > 0.8)
+2026-05-30 17:19:01 | d2_stability | INFO | === D2 complete ===
+2026-05-30 17:19:01 | d2_stability | INFO | DECISION: FiLM VIABLE without shrinkage (mean_corr > 0.8)
