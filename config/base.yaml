@@ -1,0 +1,54 @@
+seed: 42
+
+paths:
+  data_dir: "data/"
+  preprocessed_npy: "data/preprocessed/keystroke_all_list.npy"
+  processed_dir: "data/processed/"
+  splits_dir: "data/splits/"
+  results_dir: "results/"
+  typeformer_checkpoint: "TypeFormer/pretrained/TypeFormer_pretrained.pt"
+  typeformer_dir: "TypeFormer/"
+
+dataset:
+  split:
+    val_start: 0
+    val_end: 400
+    test_start: 400
+    test_end: 1400
+    train_start: 30000
+    train_end: 60000
+    cohort_start: 1400
+    cohort_end: 30000
+  num_sessions: 15
+
+model:
+  sequence_length: 50
+  dimensionality: 5
+  embedding_dim: 64
+
+evaluation:
+  E_values: [1, 2, 5, 7, 10]
+  genuine_sessions: 5         # last N sessions as genuine probes
+  impostor_session_idx: -1    # last session index from each impostor user
+  cohort_size: 1000           # number of cohort users sampled from pool
+  bootstrap_iterations: 1000
+  bootstrap_ci: 0.95
+
+film:
+  stats_dim: 20               # s_u dimensionality: 4 features x 5 statistics
+  embedding_dim: 64
+  hidden_dim: 64
+  dropout: 0.0
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  max_epochs: 100
+  patience: 10
+  margin: 1.0
+  batch_size: 256
+  E_range: [2, 5, 7, 10]     # E values used during multi-E triplet sampling
+
+scoring:
+  method: "euclidean"
+  template: "mean_pairwise"
+  K: 100                      # top-K cohort for AS-Norm (tuned on val)
+  epsilon: 1.0e-3             # floor for std to prevent division by zero

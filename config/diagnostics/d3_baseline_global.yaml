@@ -1,0 +1,10 @@
+experiment:
+  id: "d3_baseline_global"
+  description: "Diagnostic D3: global EER baseline TypeFormer pretrained pada 1000 test users"
+
+scoring:
+  method: "euclidean"
+  template: "mean_pairwise"
+
+evaluation:
+  E_values: [5]   # fokus E=5 untuk sanity check awal

@@ -1,0 +1,7 @@
+experiment:
+  id: "n3_snorm"
+  description: "S-Norm: symmetric normalization using mean of Z-Norm and T-Norm"
+
+scoring:
+  method: "snorm"
+  template: "centroid"

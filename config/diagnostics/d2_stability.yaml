@@ -1,0 +1,10 @@
+experiment:
+  id: "d2_stability"
+  description: "Diagnostic D2: stabilitas s_u(E=5) vs s_u(E=15) — validasi FiLM"
+
+diagnostics:
+  n_val_users: 100          # jumlah user validasi untuk analisis stabilitas
+  E_low: 5                  # E kecil untuk s_u
+  E_high: 15                # E besar (semua sesi) untuk s_u
+  stability_threshold_high: 0.8    # corr > 0.8: FiLM viable tanpa shrinkage
+  stability_threshold_low: 0.6     # corr 0.6-0.8: FiLM viable dengan shrinkage

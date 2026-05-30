@@ -1,0 +1,7 @@
+experiment:
+  id: "b1_centroid_eucl"
+  description: "Centroid embedding with negated Euclidean distance"
+
+scoring:
+  method: "euclidean"
+  template: "centroid"

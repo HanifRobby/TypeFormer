@@ -1,0 +1,23 @@
+experiment:
+  id: "fn_full_system"
+  description: "Full system: FiLM head + AS-Norm (primary contribution)"
+
+scoring:
+  method: "asnorm"
+  template: "centroid"
+  K: 100
+  epsilon: 1.0e-3
+
+film:
+  use_film: true
+  stats_dim: 20
+  embedding_dim: 64
+  hidden_dim: 64
+  dropout: 0.0
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  max_epochs: 100
+  patience: 10
+  margin: 1.0
+  batch_size: 256
+  E_range: [2, 5, 7, 10]

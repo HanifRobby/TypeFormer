@@ -1,0 +1,7 @@
+experiment:
+  id: "n2_tnorm"
+  description: "T-Norm: normalize cosine score using probe-side cohort statistics"
+
+scoring:
+  method: "tnorm"
+  template: "centroid"

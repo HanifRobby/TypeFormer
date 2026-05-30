@@ -1,0 +1,873 @@
+╭─── Claude Code v2.1.157 ─────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                 Welcome back Hanif!                │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ What's new              │
+│                        ▘▘ ▝▝                       │ Plugins in `.claude/sk… │
+│  Sonnet 4.6 · Claude Pro · hanifrobby@gmail.com's  │ Added `claude plugin i… │
+│  Organization                                      │ Added autocomplete for… │
+│        D:\Clean Code\TypeFormer ASNorm FiLM        │ /release-notes for more │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+   Opus 4.8 is now available! · /model to switch
+
+❯ Pahami mengenai codebase project ini. Kemudian baca dan pahami mengenai       
+  implementation_guide.md                                                       
+    mengenai penelitian yang ingin saya lakukan, lakukan check kode yang sudah  
+  ada dan penyesuaian                                                           
+    apa saja yang dibutuhkan untuk implementasi. Laporkan kepada saya jika      
+  terdapat perbedaan                                                            
+    implementasi dari guide dengan yang sudah ada, ataupun jika ada             
+  inkonsistensi atau kesalahan                                                  
+    lainnya. Lakukan planning, dan jangan lakukan perubahan kode apapun         
+  terlebih dahulu. Saya akan                                                    
+    mempertimbangkan langkah selanjutnya setelah melihat laporan anda.          
+  Direktori /TypeFormer untuk referensi kode paper yang digunakan untuk paper   
+  TypeFormer dengan sedikit modifikasi dan penyesuaian yang saya lakukan        
+  sehingga dapat digunakan tanpa error.                                         
+
+● Saya akan mulai dengan menjelajahi struktur project secara menyeluruh, lalu
+  membaca implementation guide.
+
+● Explore(Explore project structure thoroughly)
+  ⎿  Done (3 tool uses · 24.5k tokens · 1m 18s)
+  (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Sekarang saya akan membaca semua file kode TypeFormer yang ada untuk memahami
+  implementasinya secara detail.
+
+  Read 11 files (ctrl+o to expand)
+
+● Biarkan saya membaca beberapa file terakhir yang relevan sebelum menyusun
+  laporan.
+
+  Read 4 files (ctrl+o to expand)
+
+● Sekarang saya sudah membaca seluruh codebase yang ada. Biarkan saya menyimpan
+  memori tentang project ini dan menyusun laporan analisis gap.
+
+  Wrote 2 memories (ctrl+o to expand)
+
+● Berikut laporan lengkap analisis gap antara implementation_guide.md dan kode
+  yang ada:
+
+  ---
+  Laporan Analisis: Gap antara Implementation Guide dan Kode Existing
+
+  ---
+  A. Status Kritis: Struktur Proyek Belum Ada Sama Sekali
+
+  Guide mendeskripsikan proyek baru dengan struktur:
+  thesis-typeformer/
+  ├── src/          (data/, models/, scoring/, thresholds/, training/,
+  evaluation/, statistics/, utils/)
+  ├── scripts/      (01_ hingga 10_)
+  ├── config/       (base.yaml + experiment configs)
+  ├── tests/
+  └── results/
+
+  Tidak satu pun dari direktori atau file ini ada. Folder TypeFormer/ adalah
+  referensi kode paper semata. Seluruh proyek penelitian harus dibangun dari
+  nol.
+
+  ---
+  B. Perbedaan Metrik Scoring (Penting untuk Desain)
+
+  Kode existing (test.py):
+  - Menggunakan Euclidean distance (semakin kecil = semakin mirip = genuine)
+  - Label EER: 0 = genuine, 1 = impostor (distance-based convention)
+  - compute_eer(labels, scores) dengan pos_label=1 → impostor sebagai positive
+  class
+
+  Implementation guide (Section 9.8 & 10.1):
+  - AS-Norm menggunakan cosine similarity (semakin besar = semakin mirip =
+  genuine)
+  - Label EER: 1 = genuine, 0 = impostor (similarity-based convention)
+  - fpr, tpr = roc_curve(labels, scores) dengan pos_label=1 → genuine sebagai
+  positive class
+
+  Implikasi: Ketika wrapper TypeFormer digunakan dalam sistem baru, pipeline
+  scoring harus secara eksplisit memilih satu konvensi (guide merekomendasikan
+  cosine similarity) dan memastikan EER computation konsisten. Baseline B0 harus
+  dijalankan dengan Euclidean (mengikuti paper asli) tapi baseline B1/B2 dan
+  seterusnya menggunakan cosine.
+
+  ---
+  C. Bug di train.py (Bukan di trainv2.py)
+
+  File train.py:99-108 — fungsi eval_one_epoch() memanggil inner_ops() tanpa 
+  argumen mode, sehingga default ke mode='train' yang menjalankan
+  optimizer.step() selama validasi. Ini berarti validasi secara tidak sengaja
+  melatih model.
+
+  trainv2.py sudah memperbaiki ini dengan memanggil inner_ops(..., mode='eval').
+  Guide merekomendasikan trainv2.py sebagai basis, jadi ini bukan blocker untuk
+  proyek baru.
+
+  ---
+  D. Hardcoded .to('cuda') di TypeFormer Reference Code
+
+  Dua lokasi yang bermasalah untuk portabilitas:
+
+  1. model/Model.py baris 318 dan 326 — Conv1d layers di HARTrans.__init__()
+  ditulis .to('cuda') langsung saat inisialisasi:
+  torch.nn.Conv1d(...).to('cuda')  # line 318
+  torch.nn.Conv1d(...).to('cuda')  # line 326
+  2. model/Preliminary.py baris 155 — Gaussian_Position hardcode posisi ke CUDA:
+  self.positions = torch.tensor([...]).to('cuda')
+
+  Ini akan error jika dijalankan di CPU-only atau device bukan cuda:0. Karena
+  user menyebut sudah melakukan "sedikit modifikasi," kemungkinan ada
+  workaround, tapi kode yang ada masih memiliki baris ini. typeformer_wrapper.py
+  harus menggunakan torch.load(..., map_location=device) dan memindahkan model 
+  ke device yang benar — test.py sudah melakukan ini
+  (TransformerModel.to(device)), tapi inisialisasi Conv1d tetap ke CUDA saat
+  __init__ dipanggil.
+
+  ---
+  E. Inkonsistensi Format Data
+
+  Existing code (preprocess_Aalto.py):
+  - Output: satu file keystroke_all_list.npy, format ragged array
+  [user][session][keystroke, 6_features]
+  - 6 fitur: [hold_time, inter_press_time, inter_release_time, inter_key_time, 
+  keycode/255, letter]
+  - KeystrokeSessionTriplet menghapus kolom terakhir (letter/key_name),
+  menyisakan 5 fitur
+
+  Guide (Section 4.5 & 9.1):
+  - Mengharapkan file terpisah: train_sessions.npz, val_sessions.npz,
+  test_sessions.npz, cohort_pool.npz
+  - Format: (E, L, 5) per user, sudah dalam shape seragam
+
+  Yang perlu dibuat: Script 01_preprocess_data.py yang me-load
+  keystroke_all_list.npy, melakukan split, padding/truncation ke L=50, dan
+  menyimpan sebagai .npz per split — termasuk cohort pool.
+
+  ---
+  F. Inkonsistensi Penamaan Fitur
+
+  Guide menyebut fitur sebagai HL, IL, PL, RL (Section 9.5 dan 12.1), tapi kode
+  menggunakan:
+  - hold_time (HL) ✓
+  - inter_press_time (IL) ✓
+  - inter_release_time → guide menyebut PL (Press Latency?) — ambigu
+  - inter_key_time → guide menyebut RL (Release Latency?) — ambigu
+
+  Di user_stats.py guide, feature_columns = [0, 1, 2, 3] adalah HL, IL, PL, RL
+  (bukan ASCII). Mapping ini sudah benar (4 timing features, tanpa ASCII), tapi
+  nama PL/RL perlu dikonfirmasi merujuk ke kolom 2/3 (IRL/IKT).
+
+  ---
+  G. Konflik Versi Dependencies
+
+  ┌──────────────┬─────────────────────────────┬────────────────────────┐
+  │   Package    │ TypeFormer requirements.txt │ Guide requirements.txt │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ torch        │ 1.13.0+cu116                │ >=2.0.0                │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ pandas       │ 1.3.5                       │ >=2.0.0                │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ scikit-learn │ 1.0.2                       │ >=1.3.0                │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ scipy        │ 1.7.3                       │ >=1.10.0               │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ statsmodels  │ —                           │ >=0.14.0               │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ tqdm         │ —                           │ >=4.65.0               │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ joblib       │ —                           │ >=1.3.0                │
+  ├──────────────┼─────────────────────────────┼────────────────────────┤
+  │ pytest       │ —                           │ >=7.4.0                │
+  └──────────────┴─────────────────────────────┴────────────────────────┘
+
+  Project baru memerlukan requirements.txt sendiri di root yang mencantumkan
+  versi untuk proyek tesis (bukan pinned ke versi TypeFormer paper).
+
+  ---
+  H. Masalah .gitignore di Root
+
+  File .gitignore di root (D:\Clean Code\TypeFormer ASNorm FiLM\.gitignore)
+  memiliki aturan yang terlalu agresif:
+  *.txt
+  *.json
+  *.npy
+  *.pt
+  *.png
+  Ini akan mengignore TypeFormer/requirements.txt dan potensi file kecil penting
+  lainnya. Guide (Section 5.2) menyarankan .gitignore yang lebih selektif
+  (hanya folder data besar, bukan semua .txt).
+
+  ---
+  I. Hal yang Sudah Konsisten dengan Guide (Tidak Perlu Diubah)
+
+  ┌─────────────────────────────┬─────────────────────────┬────────────────┐
+  │            Item             │      Nilai di Kode      │  Konfirmasi    │
+  │                             │                         │     Guide      │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ output_dim (embedding)      │ 64                      │ ✓ Section 2.2  │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ sequence_length             │ 50                      │ ✓ Section 2.1  │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ dimensionality (channels)   │ 5                       │ ✓              │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Triplet margin              │ 1.0 (dari TripletLoss)  │ ✓ placeholder  │
+  │                             │                         │ 1.0            │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Val users                   │ 0–400 (400 users)       │ ✓ Section 2.1  │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Test users                  │ 400–1400 (1.000 users)  │ ✓ Section 2.1  │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Training users              │ 30.000–60.000 (30k      │ ✓ Section 2.1  │
+  │                             │ users)                  │                │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Cohort pool                 │ 1.400–30.000 (~28.600   │ ✓ Section 2.1  │
+  │                             │ users)                  │                │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Zero-padding arah           │ di akhir sekuens        │ ✓ Section 12.1 │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ ASCII normalisasi           │ /255                    │ ✓ Section 2.1  │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Backbone frozen saat FiLM   │ — (perlu                │ ✓ Section 2.2  │
+  │ training                    │ diimplementasi)         │                │
+  ├─────────────────────────────┼─────────────────────────┼────────────────┤
+  │ Global EER + per-subject    │ Keduanya ada di test.py │ ✓ Section 1.3  │
+  │ EER                         │                         │                │
+  └─────────────────────────────┴─────────────────────────┴────────────────┘
+
+  ---
+  J. Ringkasan: Yang Perlu Dibuat (Prioritas)
+
+  Fase 0 (Prerequisite):
+  - [ ] Root-level requirements.txt untuk proyek tesis (versi kompatibel PyTorch
+  2.x)
+  - [ ] Perbaiki .gitignore di root agar tidak terlalu agresif
+
+  Fase 0-1 (Fondasi src/):
+  - [ ] src/utils/seeds.py — reproducibility (set_global_seed)
+  - [ ] src/utils/logging.py — setup_logger
+  - [ ] src/utils/config_loader.py — YAML loader
+  - [ ] src/utils/caching.py — embedding cache ke disk
+
+  Fase 1 (Data & Model):
+  - [ ] scripts/01_preprocess_data.py — split & format ulang
+  keystroke_all_list.npy
+  - [ ] src/data/aalto_loader.py — AaltoDataset (torch Dataset)
+  - [ ] src/data/sequence_processor.py — padding, truncation
+  - [ ] src/data/cohort_sampler.py — sampling cohort dari pool
+  - [ ] src/models/typeformer_wrapper.py — wrapper frozen TypeFormer (hati-hati
+  .to('cuda') bug di __init__)
+  - [ ] src/evaluation/metrics.py — compute_eer dengan konvensi similarity
+  (bukan distance)
+  - [ ] src/evaluation/per_subject_eer.py
+  - [ ] src/evaluation/global_eer.py
+
+  Fase 2 (Diagnostik D1, D2, D3):
+  - [ ] src/statistics/user_stats.py — compute s_u
+  - [ ] scripts/03_diagnostic_d1.py (heterogenitas σ_u)
+  - [ ] scripts/04_diagnostic_d2.py (stabilitas s_u)
+  - [ ] scripts/05_diagnostic_d3.py (baseline global EER)
+  - [ ] scripts/02_reproduce_baseline.py (B0)
+
+  Fase 3 (AS-Norm):
+  - [ ] src/scoring/base_scorer.py
+  - [ ] src/scoring/asnorm.py (plus znorm, snorm, tnorm)
+  - [ ] src/thresholds/ (semua strategi threshold)
+
+  Fase 4 (FiLM):
+  - [ ] src/models/film_head.py — FiLMHead dengan identity init
+  - [ ] src/training/trainer.py + sampler.py + callbacks.py
+  - [ ] scripts/06_train_film.py
+
+  Fase 5-6 (Evaluasi penuh & statistik):
+  - [ ] src/evaluation/bootstrap_ci.py
+  - [ ] src/statistics/wilcoxon.py
+  - [ ] scripts/07-10_ — orchestration dan tabel
+
+  Config & Tests:
+  - [ ] config/base.yaml + seluruh experiment configs (12 config)
+  - [ ] tests/test_asnorm.py, test_film_head.py, test_eer_computation.py, dll.
+
+  ---
+  Rekomendasi Langkah Berikutnya
+
+  Sebelum mulai coding, ada tiga keputusan desain yang perlu dikonfirmasi:
+
+  1. Lokasi project baru: Apakah kode baru langsung di root D:\Clean 
+  Code\TypeFormer ASNorm FiLM\ (dengan src/, scripts/, dll di sana), atau di
+  subdirektori baru (misalnya thesis/)?
+  2. Scoring metric untuk baseline B0: Guide menyebutkan B0 menggunakan mean
+  pairwise Euclidean distance (mengikuti paper TypeFormer asli) dan B1/B2
+  centroid. Apakah AS-Norm selanjutnya tetap menggunakan cosine, atau perlu juga
+  ada varian dengan Euclidean sebagai kontrol?
+  3. PyTorch version: Apakah sudah ada GPU + PyTorch 2.x di environment yang
+  akan digunakan, atau masih menggunakan environment PyTorch 1.13 yang ada di
+  TypeFormer?
+
+✻ Brewed for 5m 33s
+
+❯ 1. Lakukan implementasi langsung di root, 2. AS-Norm akan menggunakan cosin,  
+  3. Saya telah menyiapkan environment conda bernama Typeformer untuk project   
+  ini. Lakukan planning dan jangan implementasi terlebih dahulu. Sebelum        
+  melakukan implementasi, jika terdapat ketidakjelasan atau inkonsistensi       
+  tanyakan kepada saya, saya akan mempertimbangkan dan memberikan keputusan     
+  implementasinya.                                                              
+
+● Baik, saya akan cek environment conda terlebih dahulu sebelum menyusun plan
+  dan mengidentifikasi pertanyaan kritis.
+
+● Bash(conda run -n Typeformer python -c "import torch; print('PyTorch:',
+      torch.__version__); print('CUDA available:', torch.cuda.is_available());
+      print('CUDA version:…)
+  ⎿  PyTorch: 2.11.0+cu126
+     CUDA available: True
+     CUDA version: 12.6
+     GPU: NVIDIA GeForce RTX 3070 Ti
+
+● Bash(conda run -n Typeformer pip list 2>&1 | findstr /i "torch numpy pandas
+      scipy scikit statsmodels tqdm joblib einops torchtyping typeguard
+      x.transform wandb mlflo…)
+  ⎿  Error: Exit code 1
+     FINDSTR: Cannot open torch numpy pandas scipy scikit statsmodels tqdm 
+     joblib einops torchtyping typeguard x.transform wandb mlflow
+
+● Bash(conda run -n Typeformer pip list 2>&1)
+  ⎿  Package                   Version
+     ------------------------- ------------
+     absl-py                   2.4.0
+     … +158 lines (ctrl+o to expand)
+
+● Baik, sekarang saya sudah memiliki gambaran lengkap: PyTorch 2.11.0+cu126, RTX
+  3070 Ti, dan semua dependency kecuali pytest sudah tersedia. Sebelum menulis
+  plan, ada beberapa inkonsistensi yang perlu klarifikasi dari Anda.
+
+  ---
+  Pertanyaan Kritis Sebelum Implementasi
+
+  1. Ketersediaan data
+
+  Apakah keystroke_all_list.npy (hasil preprocess_Aalto.py) sudah tersedia dan
+  di mana lokasinya? Ini menentukan apakah scripts/01_preprocess_data.py perlu
+  menjalankan preprocessing dari awal, atau cukup melakukan split dari file yang
+  sudah ada.
+
+● User answered Claude's questions:
+  ⎿  · Apakah file keystroke_all_list.npy (hasil preprocessing Aalto) sudah 
+     tersedia? Jika ya, di mana lokasinya? → Saya memiliki raw data, dan data 
+     yang sudah terpreprocessed di lokasi lain. Untuk data raw sudah saya 
+     tambahkan ke data/raw/*, saya dapat menambahkan data preprocessed ke 
+     direktori data/preprocessed untuk lanjutannya.
+     · Untuk baseline B0 (reproduksi TypeFormer paper), metrik apa yang 
+     digunakan? Ini menentukan apakah angka ~3.25% EER bisa direplikasi persis. 
+     → Euclidean distance (ikuti paper asli)
+     · Presisi komputasi untuk TypeFormerWrapper (forward pass backbone). Kode 
+     asli test.py menggunakan float64 (.double()), trainv2.py menggunakan 
+     float32. → Float32 (Recommended)
+     · Kapan C1/C2/C3 (threshold strategies: parametric, percentile, 
+     min-non-outlier) diimplementasi? Ini adalah 'replikasi negative findings' 
+     yang ada di experiment matrix. → Tidak diperlukan implementasi C1,C2, dan 
+     C3, saya telah mengujinya secara terpisah pada project lain
+
+● Semua informasi yang dibutuhkan sudah terkumpul. Sekarang saya akan menyusun
+  implementation plan lengkap.
+
+  ---
+  Implementation Plan: TypeFormer ASNorm FiLM Thesis
+
+  Keputusan Desain Final
+
+  ┌─────────────────────┬───────────────────────────────────────────────────┐
+  │        Item         │                     Keputusan                     │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ Lokasi project      │ Root D:\Clean Code\TypeFormer ASNorm FiLM\        │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ B0 metric           │ Euclidean distance (paper-faithful), dinegasi     │
+  │                     │ jadi similarity                                   │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ B1 metric           │ Centroid + Euclidean (dinegasi)                   │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ B2/N1-N4/F1/FN      │ Cosine similarity                                 │
+  │ metric              │                                                   │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ Float precision     │ float32                                           │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ C1/C2/C3            │ Dieksklusi (sudah diuji di project lain)          │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ Experiment matrix   │ 9 konfigurasi: B0, B1, B2, N1, N2, N3, N4, F1, FN │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ EER convention      │ Selalu: label 1=genuine, 0=impostor; higher       │
+  │                     │ score=genuine                                     │
+  ├─────────────────────┼───────────────────────────────────────────────────┤
+  │ Environment         │ Conda Typeformer (PyTorch 2.11.0+cu126, RTX 3070  │
+  │                     │ Ti)                                               │
+  └─────────────────────┴───────────────────────────────────────────────────┘
+
+  ---
+  Catatan Teknis Penting (Sebelum Plan)
+
+  1. Bug arsitektur Model.py (non-blocker karena CUDA tersedia)
+
+  HARTrans.__init__() menyimpan Conv1d layers dalam Python list biasa
+  (self.encoders), bukan nn.ModuleList. Ini berarti model.to(device) tidak
+  memindahkan layer tersebut — tapi karena sudah di-hardcode .to('cuda') saat
+  __init__, ini hanya bermasalah di CPU. Karena GPU tersedia,
+  typeformer_wrapper.py akan selalu menggunakan CUDA dan mendokumentasikan
+  constraint ini.
+
+  2. Convention scoring terpadu
+
+  Semua scorer di framework baru mengembalikan nilai "higher = more genuine".
+  Untuk B0/B1 (distance-based), scorer mengembalikan nilai negatif dari
+  Euclidean distance (-dist). Ini membuat metrics.py seragam tanpa perlu
+  special-case.
+
+  3. Genuine probes protocol
+
+  Mengikuti test.py asli: enrollment = sesi [0:E], genuine probes = 5 sesi
+  terakhir [-5:] = sesi [10:15], impostor = 1 sesi terakhir ([-1]) dari setiap
+  user lain. Tidak ada overlap karena E ≤ 10.
+
+  ---
+  Fase 0 — Fondasi (Tidak membutuhkan data)
+
+  Tujuan: Struktur direktori, config system, utilities bisa digunakan.
+
+  Files yang dibuat:
+
+  # Root level
+  requirements.txt                  ← versi tesis (PyTorch 2.x compatible)
+  .gitignore                        ← perbaikan: tidak terlalu agresif
+
+  # Config system
+  config/
+  ├── base.yaml                     ← shared defaults (paths, seeds, eval
+  protocol)
+  ├── experiments/
+  │   ├── b0_baseline.yaml
+  │   ├── b1_centroid_eucl.yaml
+  │   ├── b2_centroid_cosine.yaml
+  │   ├── n1_znorm.yaml
+  │   ├── n2_tnorm.yaml
+  │   ├── n3_snorm.yaml
+  │   ├── n4_asnorm.yaml
+  │   ├── f1_film_only.yaml
+  │   └── fn_full_system.yaml
+  └── diagnostics/
+      ├── d1_heterogeneity.yaml
+      ├── d2_stability.yaml
+      └── d3_baseline_global.yaml
+
+  # Utilities
+  src/__init__.py
+  src/utils/__init__.py
+  src/utils/seeds.py                ← set_global_seed()
+  src/utils/logging.py              ← setup_logger()
+  src/utils/config_loader.py        ← load YAML → SimpleNamespace
+  src/utils/caching.py              ← get_cached_embeddings()
+
+  Dependencies: Tidak ada.
+
+  ---
+  Fase 1 — Data Pipeline
+
+  Tujuan: Data tersplit bersih ke train/val/test/cohort; bisa di-load sebagai
+  Dataset.
+
+  Prerequisite: data/preprocessed/keystroke_all_list.npy tersedia (user
+  menempatkan di sini).
+
+  Files yang dibuat:
+
+  scripts/01_preprocess_data.py     ← ENTRY POINT: split & format data
+
+  src/data/__init__.py
+  src/data/sequence_processor.py   ← padding L=50, hapus letter col, float32
+  src/data/aalto_loader.py         ← AaltoDataset (torch.utils.data.Dataset)
+  src/data/cohort_sampler.py       ← sample N users dari cohort pool
+
+  data/                             ← dibuat oleh script 01
+  ├── raw/                          ← user sudah tempatkan data di sini
+  ├── preprocessed/                 ← keystroke_all_list.npy
+  ├── processed/
+  │   ├── train_sessions.npz        ← 30k users × 15 sessions × 50 × 5
+  │   ├── val_sessions.npz          ← 400 users × ...
+  │   ├── test_sessions.npz         ← 1000 users × ...
+  │   └── cohort_pool.npz           ← ~28.6k users × ...
+  └── splits/
+      ├── train_user_ids.txt
+      ├── val_user_ids.txt
+      ├── test_user_ids.txt
+      └── cohort_user_ids.txt
+
+  Detail sequence_processor.py:
+  - Input: raw array per session (N_keystrokes, 6) dari preprocessing
+  - Operasi: hapus kolom ke-5 (letter/key_name), simpan 5 fitur numerik,
+  zero-pad/truncate ke L=50, cast ke float32
+  - Output: (50, 5) array
+
+  Detail AaltoDataset:
+  - Load dari .npz, index per user
+  - Kembalikan {'sequence': (L,5) tensor, 'user_id': int, 'session_id': int}
+  - Tidak ada normalisasi per-user di sini (sesuai guide)
+
+  Detail 01_preprocess_data.py:
+  - Baca keystroke_all_list.npy
+  - Apply sequence_processor per sesi
+  - Simpan split sesuai indeks dari config.yaml
+  - Log statistik: jumlah user, sesi rata-rata, missing sessions
+
+  ---
+  Fase 2 — TypeFormer Wrapper & Evaluation Core
+
+  Tujuan: Bisa encode sequences → embeddings (64-dim); bisa hitung EER.
+
+  Files yang dibuat:
+
+  src/models/__init__.py
+  src/models/typeformer_wrapper.py  ← frozen backbone, float32, CUDA required
+
+  src/evaluation/__init__.py
+  src/evaluation/metrics.py         ← compute_eer, compute_far_at_frr,
+  compute_frr_at_far
+  src/evaluation/per_subject_eer.py ← mean EER across 1000 users
+  src/evaluation/global_eer.py      ← pooled EER dari semua genuine+impostor
+  src/evaluation/operating_points.py ← FAR@1%FRR, FRR@1%FAR
+  src/evaluation/bootstrap_ci.py    ← bootstrap resampling pada level user
+
+  Detail typeformer_wrapper.py:
+  TypeFormerWrapper:
+    __init__(checkpoint_path, device='cuda')
+      ← load HARTrans(configs) — konfigurasi diambil dari
+  TypeFormer/utils/config.yaml
+      ← .float() → .eval() → .to(device)
+      ← freeze: p.requires_grad = False for all p
+
+    encode(sequences: Tensor[B,L,5]) → Tensor[B,64]
+      ← @torch.no_grad()
+      ← sequences ke device, forward pass, balik ke CPU
+
+    encode_dataset(dataset, batch_size=32) → ndarray[N,64]
+      ← DataLoader loop dengan tqdm
+      ← return numpy array untuk caching
+
+  Catatan kritis: typeformer_wrapper.py perlu import HARTrans dan config dari
+  TypeFormer/. Solusi: tambahkan TypeFormer/ ke sys.path di dalam wrapper, atau
+  konfigurasikan sebagai package. Pendekatan yang dipilih: sys.path injection
+  (paling sederhana, tidak mengubah TypeFormer/).
+
+  Detail metrics.py:
+  - Convention: genuine_scores (array), impostor_scores (array), higher=genuine
+  - compute_eer() → (eer: float, threshold: float)
+  - Implementasi menggunakan sklearn.metrics.roc_curve dengan labels 1=genuine, 
+  0=impostor
+
+  ---
+  Fase 3 — Reproduksi Baseline B0 & Diagnostik
+
+  Tujuan: Validasi pipeline menghasilkan EER mendekati ~3.25% (E=5); jalankan
+  D1/D2/D3 untuk konfirmasi feasibility AS-Norm dan FiLM.
+
+  Files yang dibuat:
+
+  scripts/02_reproduce_baseline.py  ← B0: Euclidean, per-subject + global EER
+  scripts/03_diagnostic_d1.py       ← histogram σ_u, keputusan AS-Norm
+  scripts/04_diagnostic_d2.py       ← Pearson corr s_u(E=5) vs s_u(E=15)
+  scripts/05_diagnostic_d3.py       ← global EER baseline TypeFormer
+
+  src/statistics/__init__.py
+  src/statistics/user_stats.py      ← compute_user_stats() → s_u vector (20-dim)
+
+  Detail 02_reproduce_baseline.py (B0):
+
+  1. Load config b0_baseline.yaml
+  2. Load TypeFormerWrapper (frozen, float32, CUDA)
+  3. Load/compute test set embeddings → cache ke results/embeddings_cache/test/
+  4. Per user (1000 users):
+     - enrolment_embs = embeddings[user][0:E]   ← sesi 0..E-1
+     - genuine_scores = [-euclidean(mean_enrol_emb, probe_emb)
+                         for probe in embeddings[user][-5:]]
+       ← negate distance → "higher = genuine"
+       ← menggunakan MEAN pairwise: mean distance dari E sesi enrolment ke probe
+     - impostor_scores = [-euclidean(mean_enrol_emb, embeddings[other][-1])
+                         for other in all_other_users]
+  5. Hitung per_subject_eer → mean, std
+  6. Hitung global_eer dengan bootstrap_ci
+  7. Simpan ke results/b0_baseline/metrics.json + per_user_eers.csv
+
+  B0 scoring detail: Mengikuti test.py asli:
+  - Template = mean embedding dari E sesi enrolment (bukan mean pairwise dari
+  paper, TAPI test.py juga menggunakan mean yang sama dengan cara
+  euclidean_distances(enrolment_embs, test_embs) → mean(axis=0) → ini mean
+  distance per probe ke semua E embeddings, setara mean pairwise)
+  - Implementasi kita: score = -mean_i(euclidean(enrol_i, probe)) for i in 1..E
+
+  Detail user_stats.py:
+  compute_user_stats(sessions: ndarray[E,50,5]) → ndarray[20]
+    - Concatenate: (E*50, 5) → filter zero-padding rows → valid_keystrokes
+  (T_valid, 4)
+    - features: kolom 0-3 (HL, IL, IRL, IKT) — kolom 4 (ASCII) dikecualikan
+    - statistik: mean(4), std(4), p25(4), p50(4), p75(4) → concat → (20,)
+    - edge case E=1: jika T_valid < 10, warning tapi tetap return (tidak crash)
+
+  ---
+  Fase 4 — Scoring Module (AS-Norm Family)
+
+  Tujuan: Implementasi N1 (Z-Norm), N2 (T-Norm), N3 (S-Norm), N4 (AS-Norm). Juga
+  B1, B2 sebagai kontrol.
+
+  Files yang dibuat:
+
+  src/scoring/__init__.py
+  src/scoring/base_scorer.py        ← abstract BaseScorer
+  src/scoring/distance.py           ← euclidean_sim(), cosine_sim() helpers
+  src/scoring/cosine_raw.py         ← RawCosineScorer (B2)
+  src/scoring/znorm.py              ← ZNormScorer (N1): (score - mu_cohort) /
+  sigma_cohort
+  src/scoring/tnorm.py              ← TNormScorer (N2): T-norm on probe side
+  only
+  src/scoring/snorm.py              ← SNormScorer (N3): S-norm (satu sisi saja)
+  src/scoring/asnorm.py             ← ASNormScorer (N4): symmetric, per
+  pseudocode guide
+
+  scripts/07_evaluate_single.py     ← evaluate satu config untuk semua E
+  scripts/08_run_main_matrix.py     ← orchestrate B0,B1,B2,N1-N4
+
+  Hierarki Scorer:
+  BaseScorer (ABC)
+    .score(e_u, e_p) → float          # single pair
+    .score_batch(e_u, probes) → array # one-to-many (optimization)
+
+  RawEuclideanScorer(BaseScorer)     # B0, B1: -euclidean distance
+  RawCosineScorer(BaseScorer)        # B2: cosine similarity
+  ZNormScorer(BaseScorer)            # N1: z-norm pada cosine
+  TNormScorer(BaseScorer)            # N2: t-norm pada cosine
+  SNormScorer(BaseScorer)            # N3: s-norm (satu arah)
+  ASNormScorer(BaseScorer)           # N4: AS-norm (symmetric)
+    __init__(cohort: ndarray, K: int)
+
+  Perbedaan B0 vs B1 pada evaluasi (bukan di scorer, tapi di evaluation loop):
+  - B0: score(user) = mean_{i=1..E}[-euclidean(enrol_i, probe)] — mean across
+  individual embeddings
+  - B1: score(user) = -euclidean(centroid(enrol_1..E), probe) — single centroid
+  - B2/N1-N4: score(user) = scorer(centroid(enrol_1..E), probe) — centroid +
+  scorer
+
+  Cohort setup untuk N1-N4:
+  scripts/07_evaluate_single.py:
+  1. Load cohort pool (data/processed/cohort_pool.npz)
+  2. Sample N_cohort users (default: 1000, swept kemudian)
+  3. Cache cohort embeddings → results/cohort/cohort_embeddings_{hash}.npy
+  4. Instantiate scorer dengan cohort
+  5. Run evaluation loop untuk E ∈ {1,2,5,7,10}
+  6. Sweep K untuk AS-Norm pada validation set
+
+  ---
+  Fase 5 — FiLM Head & Training
+
+  Tujuan: Implementasi FiLM head dengan identity initialization; training dengan
+  multi-E sampling dan triplet loss; evaluasi F1 dan FN.
+
+  Files yang dibuat:
+
+  src/models/film_head.py           ← FiLMHead (identity init, γ=1, β=0)
+  src/models/full_model.py          ← TypeFormerWithFiLM: wrapper + head
+
+  src/training/__init__.py
+  src/training/triplet_loss.py      ← TripletMarginLoss wrapper (dari misc.py)
+  src/training/sampler.py           ← MultiETripletSampler (per pseudocode 10.4)
+  src/training/callbacks.py         ← EarlyStopping, ModelCheckpoint
+  src/training/optimizer.py         ← optimizer factory (Adam + weight decay)
+  src/training/trainer.py           ← FiLMTrainer: training loop per pseudocode
+  10.3
+
+  scripts/06_train_film.py          ← entry point training F1
+
+  Detail film_head.py: Tepat seperti pseudocode Section 10.2 di guide:
+  - fc1: Linear(stats_dim=20, hidden_dim=64) + ReLU
+  - fc2: Linear(64, 2*embedding_dim=128) → split γ, β
+  - Identity init: fc2.weight = 0, fc2.bias[:64] = 1.0, fc2.bias[64:] = 0.0
+  - Forward: γ * embedding + β
+
+  Detail trainer.py:
+  - Hanya parameter FiLM yang masuk optimizer (backbone beku)
+  - Gradient clipping max_norm=1.0
+  - Monitor ||γ-1|| dan ||β|| setiap epoch untuk sanity check
+  - Early stopping berdasarkan val_per_subj_eer
+  - Logging per epoch ke file + stdout
+  - Menyimpan 3 random seeds, report mean ± std
+
+  Sweep weight decay (pada val set sebelum training final):
+  - Grid: {1e-5, 1e-4, 1e-3} dengan E=5
+  - Pilih WD terbaik berdasarkan val_per_subj_eer
+
+  Evaluasi FN (FiLM + AS-Norm):
+  - Embeddings dimodifikasi oleh FiLM head dulu, baru masuk ASNormScorer
+  - s_u dihitung dari sesi enrolment yang sama (konsisten antara train dan eval)
+
+  ---
+  Fase 6 — Analisis Statistik & Output
+
+  Tujuan: Tabel lengkap 9 konfigurasi × 5 E; uji signifikansi; DET curves.
+
+  Files yang dibuat:
+
+  src/statistics/wilcoxon.py        ← Wilcoxon + Bonferroni per pseudocode 10.6
+
+  scripts/09_statistical_analysis.py  ← Wilcoxon untuk perbandingan utama
+  scripts/10_generate_tables.py       ← generate CSV + LaTeX tabel
+
+  notebooks/
+  ├── exploration.ipynb
+  └── visualization.ipynb           ← DET curves, histogram σ_u, s_u stability
+
+  docs/
+  ├── architecture_decisions.md
+  └── experiment_log.md
+
+  5 perbandingan Wilcoxon utama (Bonferroni α=0.01):
+  1. B0 vs N4 (AS-Norm kontribusi utama)
+  2. B0 vs FN (full system)
+  3. N4 vs FN (nilai tambah FiLM di atas AS-Norm)
+  4. B2 vs N4 (nilai tambah normalization vs raw cosine)
+  5. F1 vs FN (nilai tambah AS-Norm di atas FiLM saja)
+
+  ---
+  Fase 7 — Unit Tests
+
+  tests/__init__.py
+  tests/test_asnorm.py              ← 3 test cases dari guide Section 7.6
+  tests/test_film_head.py           ← identity init verification
+  tests/test_eer_computation.py     ← edge cases EER
+  tests/test_user_stats.py          ← E=1 edge case, padding filter
+  tests/test_data_loader.py         ← shape checks
+  tests/test_wilcoxon.py            ← paired comparison sanity check
+
+  Unit tests dijalankan per fase setelah modul selesai.
+
+  ---
+  Manifest File Lengkap
+
+  D:\Clean Code\TypeFormer ASNorm FiLM\
+  ├── TypeFormer/                    ← referensi (tidak diubah)
+  ├── implementation_guide.md        ← (ada)
+  ├── requirements.txt               ← BARU
+  ├── .gitignore                     ← DIPERBARUI
+  │
+  ├── config/
+  │   ├── base.yaml                  ← BARU
+  │   ├── experiments/ (9 files)     ← BARU
+  │   └── diagnostics/ (3 files)     ← BARU
+  │
+  ├── src/
+  │   ├── __init__.py
+  │   ├── data/    (4 files)         ← BARU
+  │   ├── models/  (4 files)         ← BARU
+  │   ├── scoring/ (7 files)         ← BARU
+  │   ├── training/(6 files)         ← BARU
+  │   ├── evaluation/(5 files)       ← BARU
+  │   ├── statistics/(2 files)       ← BARU
+  │   └── utils/  (5 files)          ← BARU
+  │
+  ├── scripts/ (10 files)            ← BARU
+  ├── tests/   (7 files)             ← BARU
+  ├── notebooks/(2 files)            ← BARU
+  ├── docs/    (2 files)             ← BARU
+  │
+  ├── data/                          ← gitignored
+  │   ├── raw/          ← user sudah ada
+  │   ├── preprocessed/ ← user akan tempatkan .npy
+  │   ├── processed/    ← dibuat script 01
+  │   └── splits/       ← dibuat script 01
+  │
+  └── results/                       ← gitignored, dibuat saat eksperimen
+
+  Total file baru: ~65 files (bukan termasuk data/ dan results/)
+
+  ---
+  Urutan Implementasi yang Disarankan
+
+  Fase 0 → Fase 1 → [Test data loader]
+         → Fase 2 → [Test EER computation]
+         → Fase 3 (B0 baseline + D1/D2/D3) → [STOP: diskusi pembimbing]
+         → Fase 4 (AS-Norm) → [Test ASNorm]
+         → Fase 5 (FiLM) → [Test FiLM head]
+         → Fase 6 (Analisis)
+         → Fase 7 (Tests — paralel dengan Fase 3-5)
+
+  ---
+  Pertanyaan Residual Sebelum Implementasi Dimulai
+
+  Ada dua hal yang perlu konfirmasi sebelum saya mulai:
+
+  1. Format data preprocessed yang akan ditempatkan user: Apakah file
+  keystroke_all_list.npy yang akan diletakkan di data/preprocessed/ adalah
+  format asli dari TypeFormer/preprocess_Aalto.py (ragged array
+  [user][session][(N_keystrokes, 6)]), atau format berbeda dari project lain?
+  2. Path pretrained weights: TypeFormer/pretrained/TypeFormer_pretrained.pt
+  apakah diakses langsung dari sana, atau perlu di-copy ke data/raw/pretrained/?
+  Ini menentukan bagaimana typeformer_wrapper.py mencari checkpoint.
+
+● User answered Claude's questions:
+  ⎿  · Format file keystroke_all_list.npy yang akan diletakkan di 
+     data/preprocessed/ — apakah dari TypeFormer/preprocess_Aalto.py (ragged 
+     array [user][session][(N_keystrokes, 6)]), atau format berbeda? → Format 
+     asli preprocess_Aalto.py (Recommended)
+     · Path pretrained TypeFormer weights — diakses dari mana? → Langsung dari 
+     TypeFormer/pretrained/ (Recommended)
+
+● Semua keputusan sudah final. Saya akan update memori dan menyajikan ringkasan
+  plan yang bisa langsung dijadikan acuan implementasi.
+
+  Wrote 1 memory (ctrl+o to expand)
+
+● Plan sudah lengkap dan semua keputusan desain terkonfirmasi. Berikut ringkasan
+  final:
+
+  ---
+  Plan Final — Siap untuk Implementasi
+
+  Keputusan yang Sudah Terkonfirmasi
+
+  ┌────────────────┬────────────────────────────────────────────────────────┐
+  │      Item      │                       Keputusan                        │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ Data source    │ data/preprocessed/keystroke_all_list.npy (format asli  │
+  │                │ preprocess_Aalto.py)                                   │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ Weights path   │ TypeFormer/pretrained/TypeFormer_pretrained.pt (akses  │
+  │                │ langsung)                                              │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ B0 scoring     │ score = -mean_i(euclidean(enrol_i, probe)) —           │
+  │                │ paper-faithful                                         │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ B2/N1-N4/F1/FN │ Cosine similarity                                      │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ Float          │ float32                                                │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ C1/C2/C3       │ Tidak diimplementasi                                   │
+  ├────────────────┼────────────────────────────────────────────────────────┤
+  │ Experiment     │ 9 konfigurasi: B0, B1, B2, N1, N2, N3, N4, F1, FN      │
+  │ matrix         │                                                        │
+  └────────────────┴────────────────────────────────────────────────────────┘
+
+  Urutan Implementasi
+
+  1. Fase 0 — Foundation: requirements.txt, .gitignore, config/, src/utils/
+  2. Fase 1 — Data pipeline: scripts/01_preprocess_data.py, src/data/
+  3. Fase 2 — Wrapper + eval core: src/models/typeformer_wrapper.py,
+  src/evaluation/
+  4. Fase 3 — B0 baseline + Diagnostik D1/D2/D3 → checkpoint diskusi pembimbing
+  5. Fase 4 — Scoring module: src/scoring/ (Z-Norm, T-Norm, S-Norm, AS-Norm)
+  6. Fase 5 — FiLM: src/models/film_head.py, src/training/
+  7. Fase 6 — Statistik & tabel: src/statistics/, scripts/09-10_
+  8. Fase 7 — Unit tests: tests/ (paralel dengan Fase 3-5)
+
+  Total: ~65 file baru di root project.
+
+  Saya siap memulai implementasi dari Fase 0 kapan pun Anda minta. Disarankan
+  dimulai dari Fase 0 → 1 → 2 → 3 secara berurutan karena masing-masing
+  bergantung pada fase sebelumnya.
+✻ Churned for 6m 41s

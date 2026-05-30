@@ -1,0 +1,9 @@
+experiment:
+  id: "n4_asnorm"
+  description: "AS-Norm: Adaptive Symmetric Score Normalization with top-K cohort selection"
+
+scoring:
+  method: "asnorm"
+  template: "centroid"
+  K: 100      # tuned on validation set
+  epsilon: 1.0e-3

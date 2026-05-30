@@ -1,0 +1,7 @@
+experiment:
+  id: "n1_znorm"
+  description: "Z-Norm: normalize cosine score using cohort mean and std"
+
+scoring:
+  method: "znorm"
+  template: "centroid"

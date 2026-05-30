@@ -1,0 +1,7 @@
+experiment:
+  id: "b2_centroid_cosine"
+  description: "Centroid embedding with raw cosine similarity"
+
+scoring:
+  method: "cosine"
+  template: "centroid"

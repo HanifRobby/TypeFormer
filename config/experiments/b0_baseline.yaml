@@ -1,0 +1,7 @@
+experiment:
+  id: "b0_baseline"
+  description: "TypeFormer baseline: mean pairwise Euclidean distance (paper-faithful)"
+
+scoring:
+  method: "euclidean"
+  template: "mean_pairwise"

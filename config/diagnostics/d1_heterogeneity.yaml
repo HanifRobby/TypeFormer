@@ -1,0 +1,9 @@
+experiment:
+  id: "d1_heterogeneity"
+  description: "Diagnostic D1: heterogenitas sigma_u lintas pengguna (validasi AS-Norm)"
+
+diagnostics:
+  n_val_users: 100          # jumlah user validasi untuk sampling sigma_u
+  cohort_size: 500          # ukuran cohort untuk hitung sigma_u
+  E_for_sigma: 5            # E sesi yang dipakai untuk hitung sigma_u
+  decision_threshold: 2.0   # ratio max/min sigma_u untuk declare AS-Norm viable
