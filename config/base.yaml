@@ -30,7 +30,7 @@ evaluation:
   E_values: [1, 2, 5, 7, 10]
   genuine_sessions: 5         # last N sessions as genuine probes
   impostor_session_idx: -1    # last session index from each impostor user
-  cohort_size: 1000           # number of cohort users sampled from pool
+  cohort_size: 2000           # number of cohort users sampled from pool (1 session each)
   bootstrap_iterations: 1000
   bootstrap_ci: 0.95
 

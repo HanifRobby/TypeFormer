@@ -6,23 +6,30 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def cohort_tag(n_cohort: int, seed: int) -> str:
+    """Return a short deterministic tag encoding cohort parameters.
+
+    Used to build filename-safe identifiers for cohort cache files so that
+    changing N or seed automatically invalidates the old cache.
+
+    Example: cohort_tag(2000, 42) → "N2000_s42"
+    """
+    return f"N{n_cohort}_s{seed}"
+
+
 def sample_cohort(
     cohort_pool_npz: str | Path,
     n_cohort: int,
     seed: int = 42,
     save_path: str | Path | None = None,
 ) -> np.ndarray:
-    """Sample a fixed cohort from the cohort pool and return their embeddings.
+    """Sample a fixed cohort from the cohort pool.
 
-    This function samples user *indices* from the cohort pool, then extracts
-    one session per sampled user (last session, index -1).  The returned array
-    is ready to be passed to scorer constructors.
-
-    NOTE: Call this once and cache the result.  Changing n_cohort or seed
-    invalidates the cache.
+    NOTE: Changing n_cohort or seed produces a different cohort.
+    Use cohort_tag() to build cache filenames that encode these parameters.
 
     Args:
-        cohort_pool_npz: Path to cohort_pool.npz (N_pool, N_sess, L, 5).
+        cohort_pool_npz: Path to cohort_pool_sessions.npz.
         n_cohort: Number of users to sample from the pool.
         seed: Random seed for reproducible cohort selection.
         save_path: If provided, save cohort user indices to this .npy file.
@@ -44,8 +51,8 @@ def sample_cohort(
     indices.sort()
 
     logger.info(
-        "Sampled %d cohort users from pool of %d  (seed=%d)",
-        n_cohort, n_pool, seed,
+        "Sampled %d cohort users from pool of %d  (seed=%d)  tag=%s",
+        n_cohort, n_pool, seed, cohort_tag(n_cohort, seed),
     )
 
     if save_path is not None:
@@ -65,7 +72,7 @@ def load_cohort_sessions(
     """Extract one session per cohort user.
 
     Args:
-        cohort_pool_npz: Path to cohort_pool.npz.
+        cohort_pool_npz: Path to cohort_pool_sessions.npz.
         cohort_indices: (n_cohort,) int array from sample_cohort().
         session_idx: Which session to extract per user (default: last = -1).
 
@@ -75,3 +82,24 @@ def load_cohort_sessions(
     data = np.load(str(cohort_pool_npz))
     sessions = data["sessions"]   # (N_pool, N_sess, L, 5)
     return sessions[cohort_indices, session_idx]   # (n_cohort, L, 5)
+
+
+def get_cohort_cache_paths(
+    results_dir: Path,
+    n_cohort: int,
+    seed: int,
+) -> tuple[Path, Path]:
+    """Return the canonical paths for cohort embeddings and indices files.
+
+    Both filenames encode (n_cohort, seed) so stale caches are never reused.
+
+    Returns:
+        emb_path: Path for .npy file with (n_cohort, D) embeddings.
+        idx_path: Path for .npy file with (n_cohort,) pool indices.
+    """
+    tag = cohort_tag(n_cohort, seed)
+    cohort_dir = results_dir / "cohort"
+    return (
+        cohort_dir / f"cohort_embeddings_{tag}.npy",
+        cohort_dir / f"cohort_indices_{tag}.npy",
+    )

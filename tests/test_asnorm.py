@@ -49,6 +49,77 @@ class TestASNormSinglePair:
         assert np.isfinite(score)
 
 
+class TestASNormMonotonicity:
+    def test_orthogonal_lower_than_identical(self, cohort):
+        """Score(e, e⊥) must be strictly lower than score(e, e).
+
+        With random Gaussian embeddings:
+          - cosine(e, e) = 1.0  → z-score >> 0
+          - cosine(e, e⊥) = 0.0 → z-score ≈ -(mu_topK / sigma_topK) < 0
+        """
+        rng = np.random.RandomState(10)
+        e = rng.randn(64).astype(np.float32)
+
+        # Gram-Schmidt: project out e-component from a random vector
+        v = rng.randn(64).astype(np.float32)
+        e_perp = v - (np.dot(v, e) / np.dot(e, e)) * e
+
+        # Verify orthogonality
+        e_n = e / np.linalg.norm(e)
+        e_perp_n = e_perp / np.linalg.norm(e_perp)
+        assert abs(np.dot(e_n, e_perp_n)) < 1e-5, "e and e_perp are not orthogonal"
+
+        score_identical = compute_asnorm_score(e, e, cohort, K=20)
+        score_orthogonal = compute_asnorm_score(e, e_perp, cohort, K=20)
+
+        assert score_identical > score_orthogonal, (
+            f"score(e,e)={score_identical:.4f} should > score(e,e⊥)={score_orthogonal:.4f}"
+        )
+
+    def test_negative_lower_than_orthogonal(self, cohort):
+        """score(e, -e) < score(e, e⊥) < score(e, e): three-way ordering."""
+        rng = np.random.RandomState(11)
+        e = rng.randn(64).astype(np.float32)
+
+        v = rng.randn(64).astype(np.float32)
+        e_perp = v - (np.dot(v, e) / np.dot(e, e)) * e
+
+        score_self = compute_asnorm_score(e, e, cohort, K=20)
+        score_perp = compute_asnorm_score(e, e_perp, cohort, K=20)
+        score_anti = compute_asnorm_score(e, -e, cohort, K=20)
+
+        assert score_self > score_perp > score_anti, (
+            f"Expected score(e,e) > score(e,e⊥) > score(e,-e), "
+            f"got {score_self:.3f} > {score_perp:.3f} > {score_anti:.3f}"
+        )
+
+    def test_output_deterministic(self, cohort):
+        """Same inputs must always produce exactly the same output (no hidden RNG)."""
+        rng = np.random.RandomState(42)
+        e_u = rng.randn(64).astype(np.float32)
+        e_p = rng.randn(64).astype(np.float32)
+
+        score1 = compute_asnorm_score(e_u, e_p, cohort, K=20)
+        score2 = compute_asnorm_score(e_u, e_p, cohort, K=20)
+        score3 = compute_asnorm_score(e_u, e_p, cohort, K=20)
+
+        assert score1 == score2 == score3, (
+            f"Non-deterministic output: {score1}, {score2}, {score3}"
+        )
+
+    def test_batch_deterministic(self, cohort):
+        """score_batch must be deterministic across repeated calls."""
+        rng = np.random.RandomState(7)
+        scorer = ASNormScorer(cohort, K=20)
+        e_u = rng.randn(64).astype(np.float32)
+        probes = rng.randn(5, 64).astype(np.float32)
+
+        out1 = scorer.score_batch(e_u, probes)
+        out2 = scorer.score_batch(e_u, probes)
+
+        np.testing.assert_array_equal(out1, out2, err_msg="score_batch is not deterministic")
+
+
 class TestASNormBatch:
     def test_batch_matches_scalar(self, cohort):
         rng = np.random.RandomState(5)
