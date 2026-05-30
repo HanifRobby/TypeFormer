@@ -1,0 +1,57 @@
+{
+  "E": 5,
+  "n_cohort": 2000,
+  "seed": 42,
+  "max_persubj_delta_abs": 0.002,
+  "cosine_baseline": {
+    "global_eer": 0.06849498746867169,
+    "persubj_eer": 0.0397844611528822
+  },
+  "sweep": [
+    {
+      "K": 10,
+      "global_eer": 0.07831954887218046,
+      "persubj_eer": 0.04073245614035087,
+      "delta_persubj_from_cosine": 0.00094799498746867,
+      "constraint_ok": true
+    },
+    {
+      "K": 30,
+      "global_eer": 0.08052568922305765,
+      "persubj_eer": 0.04097807017543859,
+      "delta_persubj_from_cosine": 0.0011936090225563925,
+      "constraint_ok": true
+    },
+    {
+      "K": 50,
+      "global_eer": 0.08106704260651627,
+      "persubj_eer": 0.0410563909774436,
+      "delta_persubj_from_cosine": 0.0012719298245614033,
+      "constraint_ok": true
+    },
+    {
+      "K": 100,
+      "global_eer": 0.07935839598997495,
+      "persubj_eer": 0.039137218045112776,
+      "delta_persubj_from_cosine": -0.0006472431077694241,
+      "constraint_ok": true
+    },
+    {
+      "K": 200,
+      "global_eer": 0.07773182957393485,
+      "persubj_eer": 0.038702380952380946,
+      "delta_persubj_from_cosine": -0.0010820802005012536,
+      "constraint_ok": true
+    },
+    {
+      "K": 500,
+      "global_eer": 0.07689285714285712,
+      "persubj_eer": 0.039625313283208015,
+      "delta_persubj_from_cosine": -0.0001591478696741852,
+      "constraint_ok": true
+    }
+  ],
+  "K_best": 500,
+  "K_best_global_eer": 0.07689285714285712,
+  "K_best_persubj_eer": 0.039625313283208015
+}

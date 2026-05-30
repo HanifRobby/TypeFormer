@@ -1,0 +1,34 @@
+2026-05-30 18:46:46 | k_sweep | INFO | === AS-Norm K Sweep ===
+2026-05-30 18:46:46 | k_sweep | INFO | K values: [10, 30, 50, 100, 200, 500]
+2026-05-30 18:46:46 | k_sweep | INFO | E=5  split=val
+2026-05-30 18:46:46 | k_sweep | INFO | Val users: 400
+2026-05-30 18:46:47 | k_sweep | INFO | Val embeddings: (400, 15, 64)
+2026-05-30 18:46:47 | k_sweep | INFO | Loading cached cohort: D:\Clean Code\TypeFormer ASNorm FiLM\results\cohort\cohort_embeddings_N2000_s42.npy
+2026-05-30 18:46:47 | k_sweep | INFO | Cohort embeddings: (2000, 64)
+2026-05-30 18:46:47 | k_sweep | INFO | Computing cosine baseline on val set ...
+2026-05-30 18:46:47 | k_sweep | INFO | Cosine baseline (val): global=6.85%  per_subj=3.98%
+2026-05-30 18:46:47 | k_sweep | INFO | Evaluating K=10 ...
+2026-05-30 18:46:49 | k_sweep | INFO |   K=10 | global=7.83% | per_subj=4.07% | Δper_subj=+0.09% | constraint=OK
+2026-05-30 18:46:49 | k_sweep | INFO | Evaluating K=30 ...
+2026-05-30 18:46:50 | k_sweep | INFO |   K=30 | global=8.05% | per_subj=4.10% | Δper_subj=+0.12% | constraint=OK
+2026-05-30 18:46:50 | k_sweep | INFO | Evaluating K=50 ...
+2026-05-30 18:46:52 | k_sweep | INFO |   K=50 | global=8.11% | per_subj=4.11% | Δper_subj=+0.13% | constraint=OK
+2026-05-30 18:46:52 | k_sweep | INFO | Evaluating K=100 ...
+2026-05-30 18:46:54 | k_sweep | INFO |   K=100 | global=7.94% | per_subj=3.91% | Δper_subj=-0.06% | constraint=OK
+2026-05-30 18:46:54 | k_sweep | INFO | Evaluating K=200 ...
+2026-05-30 18:46:55 | k_sweep | INFO |   K=200 | global=7.77% | per_subj=3.87% | Δper_subj=-0.11% | constraint=OK
+2026-05-30 18:46:55 | k_sweep | INFO | Evaluating K=500 ...
+2026-05-30 18:46:57 | k_sweep | INFO |   K=500 | global=7.69% | per_subj=3.96% | Δper_subj=-0.02% | constraint=OK
+2026-05-30 18:46:57 | k_sweep | INFO | 
+2026-05-30 18:46:57 | k_sweep | INFO | === K SWEEP SUMMARY (E=5, N_cohort=2000) ===
+2026-05-30 18:46:57 | k_sweep | INFO | Cosine baseline:  global=6.85%  per_subj=3.98%
+2026-05-30 18:46:57 | k_sweep | INFO |   K= 10 | global= 7.83% | per_subj= 4.07% | Δ=+0.09% | OK
+2026-05-30 18:46:57 | k_sweep | INFO |   K= 30 | global= 8.05% | per_subj= 4.10% | Δ=+0.12% | OK
+2026-05-30 18:46:57 | k_sweep | INFO |   K= 50 | global= 8.11% | per_subj= 4.11% | Δ=+0.13% | OK
+2026-05-30 18:46:57 | k_sweep | INFO |   K=100 | global= 7.94% | per_subj= 3.91% | Δ=-0.06% | OK
+2026-05-30 18:46:57 | k_sweep | INFO |   K=200 | global= 7.77% | per_subj= 3.87% | Δ=-0.11% | OK
+2026-05-30 18:46:57 | k_sweep | INFO |   K=500 | global= 7.69% | per_subj= 3.96% | Δ=-0.02% | OK ← BEST
+2026-05-30 18:46:57 | k_sweep | INFO | K_best = 500  (global_eer=7.69%)
+2026-05-30 18:46:57 | k_sweep | INFO | Plot saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\k_sweep\k_vs_eer.png
+2026-05-30 18:46:57 | k_sweep | INFO | Full report: D:\Clean Code\TypeFormer ASNorm FiLM\results\k_sweep\k_sweep_results.json
+2026-05-30 18:46:57 | k_sweep | INFO | === K sweep complete. K_best=500 ===

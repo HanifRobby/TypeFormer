@@ -1,0 +1,19 @@
+2026-05-30 18:11:38 | n4_asnorm | INFO | === Evaluating: n4_asnorm ===
+2026-05-30 18:11:38 | n4_asnorm | INFO | Users: 1000  Sessions: 15  Split: test
+2026-05-30 18:11:38 | n4_asnorm | INFO | Embeddings: (1000, 15, 64)
+2026-05-30 18:11:38 | n4_asnorm | INFO | Computing cohort embeddings (N=2000, seed=42) ...
+2026-05-30 18:11:40 | n4_asnorm | INFO | Cohort embeddings saved: D:\Clean Code\TypeFormer ASNorm FiLM\results\cohort\cohort_embeddings_N2000_s42.npy  shape=(2000, 64)
+2026-05-30 18:11:40 | n4_asnorm | INFO | Cohort: (2000, 64)
+2026-05-30 18:11:40 | n4_asnorm | INFO | Scorer: asnorm  K=100  N_cohort=2000  epsilon=0.001
+2026-05-30 18:11:40 | n4_asnorm | INFO | --- E=1 ---
+2026-05-30 18:14:19 | n4_asnorm | INFO | E=1 | per_subj=7.07%(±9.19%) | global=12.26%[11.62%,12.94%]
+2026-05-30 18:14:19 | n4_asnorm | INFO | --- E=2 ---
+2026-05-30 18:16:58 | n4_asnorm | INFO | E=2 | per_subj=5.24%(±7.30%) | global=9.89%[9.25%,10.34%]
+2026-05-30 18:16:58 | n4_asnorm | INFO | --- E=5 ---
+2026-05-30 18:20:38 | n4_asnorm | INFO | E=5 | per_subj=3.68%(±5.84%) | global=7.82%[7.34%,8.30%]
+2026-05-30 18:20:38 | n4_asnorm | INFO | --- E=7 ---
+2026-05-30 18:24:40 | n4_asnorm | INFO | E=7 | per_subj=3.28%(±5.51%) | global=7.24%[6.80%,7.68%]
+2026-05-30 18:24:40 | n4_asnorm | INFO | --- E=10 ---
+2026-05-30 18:28:46 | n4_asnorm | INFO | E=10 | per_subj=2.86%(±4.86%) | global=6.76%[6.38%,7.17%]
+2026-05-30 18:28:46 | n4_asnorm | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\n4_asnorm
+2026-05-30 18:28:46 | n4_asnorm | INFO | === n4_asnorm complete ===

@@ -1,0 +1,55 @@
+{
+  "experiment_id": "n4_asnorm",
+  "timestamp": "2026-05-30T11:28:46.660728+00:00",
+  "split": "test",
+  "cohort_size": 2000,
+  "scoring_method": "asnorm",
+  "K": 100,
+  "results": {
+    "E_1": {
+      "E": 1,
+      "mean_per_subject_eer": 0.07068288288288287,
+      "std_per_subject_eer": 0.09187406739027834,
+      "global_eer": 0.12260380380380383,
+      "global_eer_ci_lower": 0.11620056306306305,
+      "global_eer_ci_upper": 0.12944819569569568,
+      "n_users": 1000
+    },
+    "E_2": {
+      "E": 2,
+      "mean_per_subject_eer": 0.05236136136136135,
+      "std_per_subject_eer": 0.0730443111152485,
+      "global_eer": 0.09888498498498499,
+      "global_eer_ci_lower": 0.09254977227227229,
+      "global_eer_ci_upper": 0.10338114364364367,
+      "n_users": 1000
+    },
+    "E_5": {
+      "E": 5,
+      "mean_per_subject_eer": 0.036820320320320316,
+      "std_per_subject_eer": 0.0584279802978375,
+      "global_eer": 0.07823763763763766,
+      "global_eer_ci_lower": 0.0733550950950951,
+      "global_eer_ci_upper": 0.08300182682682682,
+      "n_users": 1000
+    },
+    "E_7": {
+      "E": 7,
+      "mean_per_subject_eer": 0.03283873873873874,
+      "std_per_subject_eer": 0.05514142370150638,
+      "global_eer": 0.07243123123123124,
+      "global_eer_ci_lower": 0.06799511011011009,
+      "global_eer_ci_upper": 0.0768004004004004,
+      "n_users": 1000
+    },
+    "E_10": {
+      "E": 10,
+      "mean_per_subject_eer": 0.028597197197197194,
+      "std_per_subject_eer": 0.04863731350497987,
+      "global_eer": 0.06763833833833834,
+      "global_eer_ci_lower": 0.06376747997997996,
+      "global_eer_ci_upper": 0.07173056806806806,
+      "n_users": 1000
+    }
+  }
+}

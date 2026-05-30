@@ -1,0 +1,5 @@
+2026-05-30 18:46:25 | b2_centroid_cosine | INFO | === Evaluating: b2_centroid_cosine ===
+2026-05-30 18:46:25 | b2_centroid_cosine | INFO | Users: 1000  Sessions: 15  Split: test
+2026-05-30 18:46:25 | b2_centroid_cosine | INFO | Embeddings: (1000, 15, 64)
+2026-05-30 18:46:25 | b2_centroid_cosine | INFO | Scorer: cosine
+2026-05-30 18:46:25 | b2_centroid_cosine | INFO | --- E=1 ---
