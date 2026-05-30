@@ -1,7 +1,8 @@
 """FiLM training loop.
 
 Trains only the FiLM head; backbone is always frozen.
-Validation uses per-subject EER on the validation split.
+Validation applies FiLM to val embeddings using per-user s_u computed
+from enrolment sessions, then measures per-subject EER with cosine scoring.
 """
 
 import logging
@@ -10,14 +11,13 @@ from typing import Dict, List
 
 import numpy as np
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from src.models.film_head import FiLMHead
 from src.models.typeformer_wrapper import TypeFormerWrapper
 from src.evaluation.per_subject_eer import evaluate_per_subject
 from src.scoring.cosine_raw import RawCosineScorer
+from src.statistics.user_stats import compute_user_stats
 from src.training.callbacks import EarlyStopping, ModelCheckpoint
 from src.training.triplet_loss import TripletLoss
 
@@ -29,12 +29,14 @@ class FiLMTrainer:
 
     Args:
         film_head: The FiLM module to train.
-        backbone: Frozen TypeFormer wrapper.
+        backbone: Frozen TypeFormer wrapper (always on CUDA).
         train_loader: DataLoader yielding triplet dicts.
         val_embeddings: (N_val, N_sess, 64) pre-computed val embeddings.
+        val_sessions: (N_val, N_sess, L, 5) raw val sessions for s_u computation.
         config: SimpleNamespace with film training hyperparameters.
         checkpoint_path: Path to save best checkpoint.
         device: Torch device for FiLM (backbone always on CUDA).
+        val_E: Number of enrolment sessions used during validation (default: 5).
     """
 
     def __init__(
@@ -43,16 +45,20 @@ class FiLMTrainer:
         backbone: TypeFormerWrapper,
         train_loader: DataLoader,
         val_embeddings: np.ndarray,
+        val_sessions: np.ndarray,
         config,
         checkpoint_path: str | Path,
         device: str = "cuda",
+        val_E: int = 5,
     ) -> None:
         self.film_head = film_head.to(device)
         self.backbone = backbone
         self.train_loader = train_loader
-        self.val_embeddings = val_embeddings
+        self.val_embeddings = val_embeddings   # (N_val, N_sess, D)
+        self.val_sessions = val_sessions       # (N_val, N_sess, L, 5)
         self.cfg = config
         self.device = device
+        self.val_E = val_E
 
         self.criterion = TripletLoss(margin=config.margin).to(device)
         self.optimizer = torch.optim.Adam(
@@ -63,8 +69,11 @@ class FiLMTrainer:
 
         self.early_stopping = EarlyStopping(patience=config.patience, mode="min")
         self.checkpoint = ModelCheckpoint(checkpoint_path)
-
         self._scorer = RawCosineScorer()
+
+    # ------------------------------------------------------------------
+    # Training
+    # ------------------------------------------------------------------
 
     def _train_epoch(self) -> float:
         self.film_head.train()
@@ -100,18 +109,48 @@ class FiLMTrainer:
 
         return float(np.mean(losses))
 
+    # ------------------------------------------------------------------
+    # Validation — FiLM applied to val embeddings using per-user s_u
+    # ------------------------------------------------------------------
+
     def _validate(self) -> float:
-        """Compute val mean per-subject EER using cosine similarity."""
+        """Compute val mean per-subject EER with FiLM-modulated embeddings.
+
+        For each val user:
+            1. Compute s_u from the first val_E enrolment sessions.
+            2. Apply FiLM: e' = film_head(e, s_u) for all sessions.
+            3. Evaluate per-subject EER using cosine similarity on e'.
+        """
         self.film_head.eval()
-        # TODO: apply FiLM to val_embeddings using s_u computed from val sessions
-        # For now, use raw embeddings as a proxy (FiLM not applied during fast validation)
-        # A full FiLM val pass is added in 06_train_film.py post-training evaluation.
+        n_users, n_sessions, D = self.val_embeddings.shape
+
+        film_val_embs = np.zeros_like(self.val_embeddings)   # (N_val, N_sess, D)
+
+        with torch.no_grad():
+            for u in range(n_users):
+                # s_u from E enrolment sessions
+                s_u = compute_user_stats(self.val_sessions[u, : self.val_E])   # (20,)
+                s_u_t = torch.from_numpy(s_u).float().to(self.device)          # (20,)
+                s_u_batch = s_u_t.unsqueeze(0).expand(n_sessions, -1)          # (N_sess, 20)
+
+                # Apply FiLM to all sessions for this user in one batch
+                embs_u = torch.from_numpy(
+                    self.val_embeddings[u]
+                ).float().to(self.device)                                        # (N_sess, D)
+
+                film_embs_u = self.film_head(embs_u, s_u_batch)                 # (N_sess, D)
+                film_val_embs[u] = film_embs_u.cpu().numpy()
+
         mean_eer, _, _ = evaluate_per_subject(
-            self.val_embeddings,
-            E=5,   # default E for validation
+            film_val_embs,
+            E=self.val_E,
             scoring_fn=self._scorer.score,
         )
         return mean_eer
+
+    # ------------------------------------------------------------------
+    # Main training loop
+    # ------------------------------------------------------------------
 
     def train(self) -> Dict[str, List[float]]:
         """Run training loop.
@@ -129,7 +168,7 @@ class FiLMTrainer:
             history["train_loss"].append(train_loss)
             history["val_eer"].append(val_eer)
 
-            # Monitor γ and β norms
+            # Monitor γ and β deviation from identity
             dummy_stats = torch.randn(1, self.film_head.fc1.in_features).to(self.device)
             g_norm, b_norm = self.film_head.get_gamma_beta_norms(dummy_stats)
 

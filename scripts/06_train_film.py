@@ -55,6 +55,7 @@ def train_one_seed(
     wrapper: TypeFormerWrapper,
     train_sessions: np.ndarray,
     val_embeddings: np.ndarray,
+    val_sessions: np.ndarray,
     out_dir: Path,
     logger,
     batch_size: int,
@@ -88,6 +89,7 @@ def train_one_seed(
         backbone=wrapper,
         train_loader=loader,
         val_embeddings=val_embeddings,
+        val_sessions=val_sessions,
         config=film_cfg,
         checkpoint_path=ckpt_path,
     )
@@ -159,6 +161,7 @@ def main() -> None:
             wrapper=wrapper,
             train_sessions=train_ds.sessions,
             val_embeddings=val_embeddings,
+            val_sessions=val_ds.sessions,
             out_dir=out_dir / "checkpoints",
             logger=logger,
             batch_size=batch_size,
