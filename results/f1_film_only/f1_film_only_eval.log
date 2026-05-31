@@ -1,0 +1,34 @@
+2026-05-31 04:51:13 | f1_film_only_eval | INFO | === Evaluating FiLM: f1_film_only on test set ===
+2026-05-31 04:51:13 | f1_film_only_eval | INFO | Auto-selected best seed: seed=7  val_EER=0.10%
+2026-05-31 04:51:13 | f1_film_only_eval | INFO | Checkpoint: D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only\checkpoints\film_head_seed7.pt
+2026-05-31 04:51:13 | f1_film_only_eval | INFO | Users: 1000  Sessions: 15
+2026-05-31 04:51:14 | f1_film_only_eval | INFO | Embeddings: (1000, 15, 64)
+2026-05-31 04:51:14 | f1_film_only_eval | INFO | FiLM head loaded from film_head_seed7.pt
+2026-05-31 04:51:14 | f1_film_only_eval | INFO | Cosine scorer
+2026-05-31 04:51:14 | f1_film_only_eval | INFO | --- E=1 (FiLM-modulated) ---
+2026-05-31 04:54:39 | f1_film_only_eval | INFO | E=1 | per_subj=0.20%(±0.75%) | global=3.88%[3.42%,4.42%]
+2026-05-31 04:54:39 | f1_film_only_eval | INFO |   [Sanity] Evaluating with RANDOM s_u ...
+2026-05-31 04:58:18 | f1_film_only_eval | INFO | E=1_random_su | per_subj=0.07%(±0.24%) | global=5.90%[5.42%,6.43%]
+2026-05-31 04:58:18 | f1_film_only_eval | INFO |   [Sanity] E=1 | proper_s_u=0.20%  random_s_u=0.07%  (large gap → s_u matters; small gap → potential collapse)
+2026-05-31 04:58:18 | f1_film_only_eval | INFO | --- E=2 (FiLM-modulated) ---
+2026-05-31 05:01:42 | f1_film_only_eval | INFO | E=2 | per_subj=0.15%(±0.57%) | global=2.70%[2.32%,3.12%]
+2026-05-31 05:01:42 | f1_film_only_eval | INFO |   [Sanity] Evaluating with RANDOM s_u ...
+2026-05-31 05:05:13 | f1_film_only_eval | INFO | E=2_random_su | per_subj=0.05%(±0.17%) | global=4.96%[4.54%,5.45%]
+2026-05-31 05:05:13 | f1_film_only_eval | INFO |   [Sanity] E=2 | proper_s_u=0.15%  random_s_u=0.05%  (large gap → s_u matters; small gap → potential collapse)
+2026-05-31 05:05:13 | f1_film_only_eval | INFO | --- E=5 (FiLM-modulated) ---
+2026-05-31 05:08:21 | f1_film_only_eval | INFO | E=5 | per_subj=0.09%(±0.19%) | global=2.12%[1.77%,2.42%]
+2026-05-31 05:08:21 | f1_film_only_eval | INFO |   [Sanity] Evaluating with RANDOM s_u ...
+2026-05-31 05:11:51 | f1_film_only_eval | INFO | E=5_random_su | per_subj=0.03%(±0.14%) | global=3.92%[3.57%,4.34%]
+2026-05-31 05:11:51 | f1_film_only_eval | INFO |   [Sanity] E=5 | proper_s_u=0.09%  random_s_u=0.03%  (large gap → s_u matters; small gap → potential collapse)
+2026-05-31 05:11:51 | f1_film_only_eval | INFO | --- E=7 (FiLM-modulated) ---
+2026-05-31 05:15:13 | f1_film_only_eval | INFO | E=7 | per_subj=0.09%(±0.18%) | global=1.92%[1.62%,2.28%]
+2026-05-31 05:15:13 | f1_film_only_eval | INFO |   [Sanity] Evaluating with RANDOM s_u ...
+2026-05-31 05:18:44 | f1_film_only_eval | INFO | E=7_random_su | per_subj=0.03%(±0.11%) | global=3.72%[3.34%,4.14%]
+2026-05-31 05:18:44 | f1_film_only_eval | INFO |   [Sanity] E=7 | proper_s_u=0.09%  random_s_u=0.03%  (large gap → s_u matters; small gap → potential collapse)
+2026-05-31 05:18:44 | f1_film_only_eval | INFO | --- E=10 (FiLM-modulated) ---
+2026-05-31 05:22:02 | f1_film_only_eval | INFO | E=10 | per_subj=0.08%(±0.16%) | global=1.60%[1.38%,1.90%]
+2026-05-31 05:22:02 | f1_film_only_eval | INFO |   [Sanity] Evaluating with RANDOM s_u ...
+2026-05-31 05:25:35 | f1_film_only_eval | INFO | E=10_random_su | per_subj=0.02%(±0.10%) | global=3.66%[3.28%,4.01%]
+2026-05-31 05:25:35 | f1_film_only_eval | INFO |   [Sanity] E=10 | proper_s_u=0.08%  random_s_u=0.02%  (large gap → s_u matters; small gap → potential collapse)
+2026-05-31 05:25:35 | f1_film_only_eval | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only\metrics_test.json
+2026-05-31 05:25:35 | f1_film_only_eval | INFO | === F1 evaluation complete ===

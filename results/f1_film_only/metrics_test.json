@@ -1,0 +1,109 @@
+{
+  "experiment_id": "f1_film_only",
+  "split": "test",
+  "checkpoint": "D:\\Clean Code\\TypeFormer ASNorm FiLM\\results\\f1_film_only\\checkpoints\\film_head_seed7.pt",
+  "scoring_method": "cosine",
+  "timestamp": "2026-05-30T22:25:35.162039+00:00",
+  "results": {
+    "E_1": {
+      "E": 1,
+      "suffix": "",
+      "mean_per_subject_eer": 0.0020028028028028022,
+      "std_per_subject_eer": 0.0074928264435911935,
+      "global_eer": 0.038781381381381354,
+      "global_eer_ci_lower": 0.03417727727727728,
+      "global_eer_ci_upper": 0.04418397147147148,
+      "n_users": 1000
+    },
+    "E_1_random_su": {
+      "E": 1,
+      "suffix": "_random_su",
+      "mean_per_subject_eer": 0.0007112112112112112,
+      "std_per_subject_eer": 0.0023608433533584675,
+      "global_eer": 0.05897047047047049,
+      "global_eer_ci_lower": 0.054186148648648666,
+      "global_eer_ci_upper": 0.06427631131131133,
+      "n_users": 1000
+    },
+    "E_2": {
+      "E": 2,
+      "suffix": "",
+      "mean_per_subject_eer": 0.0014833833833833832,
+      "std_per_subject_eer": 0.005662904492935133,
+      "global_eer": 0.026960460460460474,
+      "global_eer_ci_lower": 0.023221233733733734,
+      "global_eer_ci_upper": 0.031199624624624625,
+      "n_users": 1000
+    },
+    "E_2_random_su": {
+      "E": 2,
+      "suffix": "_random_su",
+      "mean_per_subject_eer": 0.0004589589589589589,
+      "std_per_subject_eer": 0.0017127146872167637,
+      "global_eer": 0.04958428428428427,
+      "global_eer_ci_lower": 0.0453575975975976,
+      "global_eer_ci_upper": 0.054522697697697686,
+      "n_users": 1000
+    },
+    "E_5": {
+      "E": 5,
+      "suffix": "",
+      "mean_per_subject_eer": 0.0009489489489489488,
+      "std_per_subject_eer": 0.0018532840821407668,
+      "global_eer": 0.021191091091091088,
+      "global_eer_ci_lower": 0.017675050050050024,
+      "global_eer_ci_upper": 0.024162512512512512,
+      "n_users": 1000
+    },
+    "E_5_random_su": {
+      "E": 5,
+      "suffix": "_random_su",
+      "mean_per_subject_eer": 0.0003073073073073073,
+      "std_per_subject_eer": 0.0013685741182849255,
+      "global_eer": 0.03920660660660662,
+      "global_eer_ci_lower": 0.035695420420420405,
+      "global_eer_ci_upper": 0.04341649149149149,
+      "n_users": 1000
+    },
+    "E_7": {
+      "E": 7,
+      "suffix": "",
+      "mean_per_subject_eer": 0.0008693693693693693,
+      "std_per_subject_eer": 0.0018248601725019149,
+      "global_eer": 0.019243643643643643,
+      "global_eer_ci_lower": 0.01619783533533533,
+      "global_eer_ci_upper": 0.02283044294294296,
+      "n_users": 1000
+    },
+    "E_7_random_su": {
+      "E": 7,
+      "suffix": "_random_su",
+      "mean_per_subject_eer": 0.0002577577577577577,
+      "std_per_subject_eer": 0.0011467661401033758,
+      "global_eer": 0.03720860860860861,
+      "global_eer_ci_lower": 0.03340018768768768,
+      "global_eer_ci_upper": 0.04137675425425425,
+      "n_users": 1000
+    },
+    "E_10": {
+      "E": 10,
+      "suffix": "",
+      "mean_per_subject_eer": 0.0007977977977977977,
+      "std_per_subject_eer": 0.0016282169787744535,
+      "global_eer": 0.016028528528528534,
+      "global_eer_ci_lower": 0.013800888388388406,
+      "global_eer_ci_upper": 0.018999499499499507,
+      "n_users": 1000
+    },
+    "E_10_random_su": {
+      "E": 10,
+      "suffix": "_random_su",
+      "mean_per_subject_eer": 0.00022722722722722725,
+      "std_per_subject_eer": 0.0009792281739950473,
+      "global_eer": 0.03660180180180178,
+      "global_eer_ci_lower": 0.03279611111111114,
+      "global_eer_ci_upper": 0.04005453203203204,
+      "n_users": 1000
+    }
+  }
+}

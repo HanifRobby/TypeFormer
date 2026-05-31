@@ -1,0 +1,18 @@
+2026-05-31 05:51:48 | n1_znorm | INFO | === Evaluating: n1_znorm ===
+2026-05-31 05:51:48 | n1_znorm | INFO | Users: 1000  Sessions: 15  Split: test
+2026-05-31 05:51:49 | n1_znorm | INFO | Embeddings: (1000, 15, 64)
+2026-05-31 05:51:49 | n1_znorm | INFO | Loading cached cohort embeddings: D:\Clean Code\TypeFormer ASNorm FiLM\results\cohort\cohort_embeddings_N2000_s42.npy
+2026-05-31 05:51:49 | n1_znorm | INFO | Cohort: (2000, 64)
+2026-05-31 05:51:49 | n1_znorm | INFO | Scorer: znorm  K=100  N_cohort=2000  epsilon=0.001
+2026-05-31 05:51:49 | n1_znorm | INFO | --- E=1 ---
+2026-05-31 05:55:26 | n1_znorm | INFO | E=1 | per_subj=6.19%(±8.05%) | global=11.88%[11.44%,12.38%]
+2026-05-31 05:55:26 | n1_znorm | INFO | --- E=2 ---
+2026-05-31 05:59:04 | n1_znorm | INFO | E=2 | per_subj=4.57%(±6.57%) | global=10.46%[10.09%,10.90%]
+2026-05-31 05:59:04 | n1_znorm | INFO | --- E=5 ---
+2026-05-31 06:02:40 | n1_znorm | INFO | E=5 | per_subj=3.29%(±5.33%) | global=9.46%[9.09%,9.81%]
+2026-05-31 06:02:40 | n1_znorm | INFO | --- E=7 ---
+2026-05-31 06:05:25 | n1_znorm | INFO | E=7 | per_subj=2.99%(±5.08%) | global=9.16%[8.86%,9.52%]
+2026-05-31 06:05:25 | n1_znorm | INFO | --- E=10 ---
+2026-05-31 06:08:04 | n1_znorm | INFO | E=10 | per_subj=2.59%(±4.46%) | global=8.92%[8.60%,9.24%]
+2026-05-31 06:08:04 | n1_znorm | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\n1_znorm
+2026-05-31 06:08:04 | n1_znorm | INFO | === n1_znorm complete ===

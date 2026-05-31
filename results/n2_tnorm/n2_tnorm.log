@@ -1,0 +1,18 @@
+2026-05-31 06:08:07 | n2_tnorm | INFO | === Evaluating: n2_tnorm ===
+2026-05-31 06:08:07 | n2_tnorm | INFO | Users: 1000  Sessions: 15  Split: test
+2026-05-31 06:08:07 | n2_tnorm | INFO | Embeddings: (1000, 15, 64)
+2026-05-31 06:08:07 | n2_tnorm | INFO | Loading cached cohort embeddings: D:\Clean Code\TypeFormer ASNorm FiLM\results\cohort\cohort_embeddings_N2000_s42.npy
+2026-05-31 06:08:08 | n2_tnorm | INFO | Cohort: (2000, 64)
+2026-05-31 06:08:08 | n2_tnorm | INFO | Scorer: tnorm  K=100  N_cohort=2000  epsilon=0.001
+2026-05-31 06:08:08 | n2_tnorm | INFO | --- E=1 ---
+2026-05-31 06:10:46 | n2_tnorm | INFO | E=1 | per_subj=8.19%(±9.21%) | global=12.80%[12.28%,13.40%]
+2026-05-31 06:10:46 | n2_tnorm | INFO | --- E=2 ---
+2026-05-31 06:13:24 | n2_tnorm | INFO | E=2 | per_subj=6.55%(±7.92%) | global=11.34%[10.86%,11.79%]
+2026-05-31 06:13:24 | n2_tnorm | INFO | --- E=5 ---
+2026-05-31 06:16:02 | n2_tnorm | INFO | E=5 | per_subj=5.18%(±6.90%) | global=10.08%[9.72%,10.42%]
+2026-05-31 06:16:02 | n2_tnorm | INFO | --- E=7 ---
+2026-05-31 06:18:41 | n2_tnorm | INFO | E=7 | per_subj=4.76%(±6.49%) | global=9.70%[9.36%,10.04%]
+2026-05-31 06:18:41 | n2_tnorm | INFO | --- E=10 ---
+2026-05-31 06:21:19 | n2_tnorm | INFO | E=10 | per_subj=4.36%(±6.04%) | global=9.34%[9.00%,9.62%]
+2026-05-31 06:21:19 | n2_tnorm | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\n2_tnorm
+2026-05-31 06:21:19 | n2_tnorm | INFO | === n2_tnorm complete ===

@@ -1,0 +1,12 @@
+2026-05-31 06:39:16 | fn_full_system | INFO | === Training FiLM: fn_full_system ===
+2026-05-31 06:39:17 | fn_full_system | INFO | Train users: 30000  Val users: 400
+2026-05-31 06:39:18 | fn_full_system | INFO | Val embeddings: (400, 15, 64)
+2026-05-31 06:39:18 | fn_full_system | INFO | === Seed 42 ===
+2026-05-31 06:45:50 | fn_full_system | INFO | Seed 42 — best val EER: 0.12%
+2026-05-31 06:45:50 | fn_full_system | INFO | === Seed 7 ===
+2026-05-31 06:51:52 | fn_full_system | INFO | Seed 7 — best val EER: 0.10%
+2026-05-31 06:51:52 | fn_full_system | INFO | === Seed 123 ===
+2026-05-31 06:57:35 | fn_full_system | INFO | Seed 123 — best val EER: 0.10%
+2026-05-31 06:57:35 | fn_full_system | INFO | Multi-seed summary: val_EER = 0.11% ± 0.01%
+2026-05-31 06:57:35 | fn_full_system | INFO | Training complete. Report saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\fn_full_system
+2026-05-31 06:57:35 | fn_full_system | INFO | Best checkpoint per seed in D:\Clean Code\TypeFormer ASNorm FiLM\results\fn_full_system/checkpoints/

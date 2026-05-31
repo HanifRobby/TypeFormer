@@ -1,0 +1,16 @@
+2026-05-31 05:51:20 | b1_centroid_eucl | INFO | === Evaluating: b1_centroid_eucl ===
+2026-05-31 05:51:20 | b1_centroid_eucl | INFO | Users: 1000  Sessions: 15  Split: test
+2026-05-31 05:51:21 | b1_centroid_eucl | INFO | Embeddings: (1000, 15, 64)
+2026-05-31 05:51:21 | b1_centroid_eucl | INFO | Scorer: euclidean
+2026-05-31 05:51:21 | b1_centroid_eucl | INFO | --- E=1 ---
+2026-05-31 05:54:51 | b1_centroid_eucl | INFO | E=1 | per_subj=6.15%(±8.06%) | global=9.70%[9.14%,10.28%]
+2026-05-31 05:54:51 | b1_centroid_eucl | INFO | --- E=2 ---
+2026-05-31 05:58:36 | b1_centroid_eucl | INFO | E=2 | per_subj=4.60%(±6.60%) | global=7.72%[7.24%,8.14%]
+2026-05-31 05:58:36 | b1_centroid_eucl | INFO | --- E=5 ---
+2026-05-31 06:02:18 | b1_centroid_eucl | INFO | E=5 | per_subj=3.24%(±5.25%) | global=6.14%[5.73%,6.51%]
+2026-05-31 06:02:18 | b1_centroid_eucl | INFO | --- E=7 ---
+2026-05-31 06:05:12 | b1_centroid_eucl | INFO | E=7 | per_subj=2.94%(±4.99%) | global=5.74%[5.38%,6.07%]
+2026-05-31 06:05:12 | b1_centroid_eucl | INFO | --- E=10 ---
+2026-05-31 06:07:53 | b1_centroid_eucl | INFO | E=10 | per_subj=2.55%(±4.39%) | global=5.32%[4.94%,5.60%]
+2026-05-31 06:07:53 | b1_centroid_eucl | INFO | Results saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\b1_centroid_eucl
+2026-05-31 06:07:53 | b1_centroid_eucl | INFO | === b1_centroid_eucl complete ===
