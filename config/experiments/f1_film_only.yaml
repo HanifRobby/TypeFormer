@@ -19,3 +19,4 @@ film:
   margin: 1.0
   batch_size: 256
   E_range: [2, 5, 7, 10]
+  film_reg_lambda: 0.1   # identity regularisation: penalise ||gamma-1||^2 + ||beta||^2

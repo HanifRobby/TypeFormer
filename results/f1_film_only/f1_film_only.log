@@ -22,3 +22,15 @@
 2026-05-30 20:20:56 | f1_film_only | INFO | Multi-seed summary: val_EER = 0.11% ± 0.01%
 2026-05-30 20:20:56 | f1_film_only | INFO | Training complete. Report saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only
 2026-05-30 20:20:56 | f1_film_only | INFO | Best checkpoint per seed in D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only/checkpoints/
+2026-05-31 07:38:12 | f1_film_only | INFO | === Training FiLM: f1_film_only ===
+2026-05-31 07:38:14 | f1_film_only | INFO | Train users: 30000  Val users: 400
+2026-05-31 07:38:14 | f1_film_only | INFO | Val embeddings: (400, 15, 64)
+2026-05-31 07:38:14 | f1_film_only | INFO | === Seed 42 ===
+2026-05-31 07:49:21 | f1_film_only | INFO | Seed 42 — best val EER: 0.21%
+2026-05-31 07:49:21 | f1_film_only | INFO | === Seed 7 ===
+2026-05-31 08:09:07 | f1_film_only | INFO | Seed 7 — best val EER: 0.15%
+2026-05-31 08:09:07 | f1_film_only | INFO | === Seed 123 ===
+2026-05-31 08:17:52 | f1_film_only | INFO | Seed 123 — best val EER: 0.17%
+2026-05-31 08:17:52 | f1_film_only | INFO | Multi-seed summary: val_EER = 0.18% ± 0.03%
+2026-05-31 08:17:52 | f1_film_only | INFO | Training complete. Report saved to D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only
+2026-05-31 08:17:52 | f1_film_only | INFO | Best checkpoint per seed in D:\Clean Code\TypeFormer ASNorm FiLM\results\f1_film_only/checkpoints/

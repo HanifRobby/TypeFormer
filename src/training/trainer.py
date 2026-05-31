@@ -66,6 +66,8 @@ class FiLMTrainer:
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
         )
+        # Identity regularisation strength (0 = disabled, 0.1 = recommended).
+        self._lambda_reg = float(getattr(config, "film_reg_lambda", 0.0))
 
         self.early_stopping = EarlyStopping(patience=config.patience, mode="min")
         self.checkpoint = ModelCheckpoint(checkpoint_path)
@@ -98,14 +100,31 @@ class FiLMTrainer:
             e_pos_m = self.film_head(e_pos, s_u_pos)
             e_neg_m = self.film_head(e_neg, s_u_neg)
 
-            loss = self.criterion(e_anc_m, e_pos_m, e_neg_m)
+            loss_triplet = self.criterion(e_anc_m, e_pos_m, e_neg_m)
+
+            # Identity regularisation: penalise large deviation from γ=1, β=0.
+            # This prevents the degenerate "β dominates, γ≈0" collapse where FiLM
+            # routes all embeddings of user u to a fixed point β(s_u_u) and the
+            # backbone embedding is suppressed entirely.
+            loss_reg = torch.tensor(0.0, device=self.device)
+            if self._lambda_reg > 0.0:
+                gb_anc = self.film_head.fc2(
+                    torch.relu(self.film_head.fc1(s_u_anc))
+                )
+                gamma_anc = gb_anc[:, : self.film_head.embedding_dim]
+                beta_anc  = gb_anc[:, self.film_head.embedding_dim :]
+                loss_reg = self._lambda_reg * (
+                    ((gamma_anc - 1.0) ** 2).mean() + (beta_anc ** 2).mean()
+                )
+
+            loss = loss_triplet + loss_reg
 
             self.optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.film_head.parameters(), max_norm=1.0)
             self.optimizer.step()
 
-            losses.append(loss.item())
+            losses.append(loss_triplet.item())
 
         return float(np.mean(losses))
 

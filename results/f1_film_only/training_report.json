@@ -1,30 +1,30 @@
 {
   "experiment_id": "f1_film_only",
-  "timestamp": "2026-05-30T13:20:56.610731+00:00",
+  "timestamp": "2026-05-31T01:17:52.238563+00:00",
   "seeds": [
     42,
     7,
     123
   ],
-  "val_eer_mean": 0.0010776942355889725,
-  "val_eer_std": 9.533285748560745e-05,
+  "val_eer_mean": 0.001784670008354219,
+  "val_eer_std": 0.0002648967560479455,
   "seed_results": [
     {
       "seed": 42,
-      "best_val_eer": 0.001212406015037594,
-      "n_epochs": 58,
+      "best_val_eer": 0.0021365914786967417,
+      "n_epochs": 43,
       "checkpoint": "D:\\Clean Code\\TypeFormer ASNorm FiLM\\results\\f1_film_only\\checkpoints\\film_head_seed42.pt"
     },
     {
       "seed": 7,
-      "best_val_eer": 0.0010056390977443608,
-      "n_epochs": 55,
+      "best_val_eer": 0.0014974937343358397,
+      "n_epochs": 76,
       "checkpoint": "D:\\Clean Code\\TypeFormer ASNorm FiLM\\results\\f1_film_only\\checkpoints\\film_head_seed7.pt"
     },
     {
       "seed": 123,
-      "best_val_eer": 0.0010150375939849624,
-      "n_epochs": 52,
+      "best_val_eer": 0.0017199248120300754,
+      "n_epochs": 49,
       "checkpoint": "D:\\Clean Code\\TypeFormer ASNorm FiLM\\results\\f1_film_only\\checkpoints\\film_head_seed123.pt"
     }
   ]
